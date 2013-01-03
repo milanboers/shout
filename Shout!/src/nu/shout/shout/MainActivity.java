@@ -9,6 +9,7 @@ import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
@@ -20,6 +21,7 @@ public class MainActivity extends Activity implements Observer {
 	private static final String TAG = "MainActivity";
 	
 	private ChatsManager chatsManager;
+	private IRCManagerTask connectionManager;
 	
 	private EditText chatLine;
 	private TextView chatBox;
@@ -31,6 +33,7 @@ public class MainActivity extends Activity implements Observer {
         setContentView(R.layout.activity_main);
         
         this.chatsManager = ChatsManager.getInstance();
+        this.connectionManager = IRCManagerTask.getInstance();
         
         this.chatLine = (EditText) findViewById(R.id.chatLine);
         this.chatBox = (TextView) findViewById(R.id.chatBox);
@@ -84,6 +87,17 @@ public class MainActivity extends Activity implements Observer {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.activity_main, menu);
         return true;
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	switch (item.getItemId()) {
+    		case R.id.menu_connect:
+    			connectionManager.connect();
+    			return true;
+    		default:
+    			return super.onOptionsItemSelected(item);
+    	}
     }
 
     /**
