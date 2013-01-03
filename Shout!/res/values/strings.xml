@@ -2,7 +2,8 @@
 <resources>
 
     <string name="app_name">Shout!</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="send">Send</string>
+    <string name="chatLineHint">Type something&#8230;</string>
     <string name="menu_settings">Settings</string>
 
 </resources>
