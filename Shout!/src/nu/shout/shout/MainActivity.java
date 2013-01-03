@@ -3,6 +3,8 @@ package nu.shout.shout;
 import java.util.Observable;
 import java.util.Observer;
 
+import nu.shout.shout.irc.IRCManagerTask;
+
 import android.os.Bundle;
 import android.app.Activity;
 import android.text.method.ScrollingMovementMethod;
