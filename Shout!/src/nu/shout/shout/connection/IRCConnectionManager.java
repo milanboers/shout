@@ -1,4 +1,4 @@
-package nu.shout.shout.chats;
+package nu.shout.shout.connection;
 
 import java.io.IOException;
 
@@ -8,17 +8,16 @@ import nu.shout.shout.irc.IRCBotObserver;
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
 
-import android.os.AsyncTask;
 import android.util.Log;
 
 public class IRCConnectionManager extends ConnectionManager implements IRCBotObserver {
 	private static final String TAG = "IRCManagerTask";
 
-	private ChatsManager chatsManager;
+	private ConnectionManagerObserver observer;
 	private IRCBot bot;
 
-	public IRCConnectionManager(ChatsManager chatsManager) {
-		this.chatsManager = chatsManager;
+	public IRCConnectionManager(ConnectionManagerObserver observer) {
+		this.observer = observer;
 		this.bot = new IRCBot(this);
 	}
 
@@ -40,7 +39,7 @@ public class IRCConnectionManager extends ConnectionManager implements IRCBotObs
 	@Override
 	protected Void doInBackground(Void... arg0) {
 		try {
-			bot.connect("irc.freenode.net");
+			this.bot.connect("irc.freenode.net");
 		} catch (NickAlreadyInUseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -51,22 +50,22 @@ public class IRCConnectionManager extends ConnectionManager implements IRCBotObs
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		bot.joinChannel("##pytest");
+		this.bot.joinChannel("##pytest");
 		return null;
 	}
 
 	@Override
-	public void onMessage(String channel, String sender, String login, String hostname, String message) {
-		this.chatsManager.addChat(new Chat(sender, message));
+	public void onIrcBotMessage(String channel, String sender, String login, String hostname, String message) {
+		this.observer.onConManMessage(channel, sender, login, hostname, message);
 	}
 
 	@Override
-	public void onConnect() {
-		this.chatsManager.onConnect();
+	public void onIrcBotConnect() {
+		this.observer.onConManConnect();
 	}
 
 	@Override
-	public void onDisconnect() {
-		this.chatsManager.onDisconnect();
+	public void onIrcBotDisconnect() {
+		this.observer.onConManDisconnect();
 	}
 }

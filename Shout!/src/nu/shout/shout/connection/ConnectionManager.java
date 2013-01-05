@@ -1,4 +1,4 @@
-package nu.shout.shout.chats;
+package nu.shout.shout.connection;
 
 import android.os.AsyncTask;
 

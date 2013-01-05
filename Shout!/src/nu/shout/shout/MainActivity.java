@@ -6,7 +6,7 @@ import java.util.Observer;
 
 import nu.shout.shout.chats.Chat;
 import nu.shout.shout.chats.ChatsManager;
-import nu.shout.shout.chats.IRCConnectionManager;
+import nu.shout.shout.chats.ChatsManagerObserver;
 
 import android.os.Bundle;
 import android.app.Activity;
@@ -22,11 +22,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
-public class MainActivity extends Activity implements Observer {
+public class MainActivity extends Activity implements ChatsManagerObserver {
 	private static final String TAG = "MainActivity";
 	
 	private ChatsManager chatsManager;
-	//private IRCManagerTask connectionManager;
 	
 	private EditText chatLine;
 	private TextView chatBox;
@@ -38,7 +37,6 @@ public class MainActivity extends Activity implements Observer {
         setContentView(R.layout.activity_main);
         
         this.chatsManager = ChatsManager.getInstance();
-        //this.connectionManager = IRCManagerTask.getInstance();
         
         this.chatLine = (EditText) findViewById(R.id.chatLine);
         this.chatBox = (TextView) findViewById(R.id.chatBox);
@@ -47,12 +45,15 @@ public class MainActivity extends Activity implements Observer {
         setupUI();
         
         // Register yourself to ChatsManager updates
+        Log.v(TAG, "adding observer");
         ChatsManager.getInstance().addObserver(this);
+        Log.v(TAG, "got observer");
         
         // Add existing chats to chatbox
-        for(Chat chat : ChatsManager.getInstance().getChats()) {
+        for(Chat chat : this.chatsManager.getChats()) {
         	this.addChatToBox(chat);
         }
+        Log.v(TAG, "end constructor");
     }
     
     private void setupUI() {
@@ -101,20 +102,6 @@ public class MainActivity extends Activity implements Observer {
     }
 
     /**
-     * Called when ChatsManager is updated (e.g. with a new chat)
-     */
-	@Override
-	public void update(Observable arg0, Object arg1) {
-		if(arg0 instanceof ChatsManager) {
-			// Get all new chats
-			List<Chat> newChats = this.chatsManager.getNewChats();
-			for(Chat chat : newChats) {
-				addChatToBox(chat);
-			}
-		}
-	}
-
-    /**
      * Fired when send button is hit. Sends the current line in the chatLine.
      */
     private void send() {
@@ -144,5 +131,22 @@ public class MainActivity extends Activity implements Observer {
 				MainActivity.this.chatBox.append("\n" + text);
 			}
 		});
+	}
+
+	@Override
+	public void onChatsManagerNewChat(Chat chat) {
+		this.addChatToBox(chat);
+	}
+
+	@Override
+	public void onChatsManagerConnect() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onChatsManagerDisconnect() {
+		// TODO Auto-generated method stub
+		
 	}
 }

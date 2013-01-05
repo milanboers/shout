@@ -5,6 +5,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Queue;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import nu.shout.shout.connection.ConnectionManager;
+import nu.shout.shout.connection.ConnectionManagerObserver;
+import nu.shout.shout.connection.IRCConnectionManager;
 
 import android.util.Log;
 
@@ -14,7 +19,7 @@ import android.util.Log;
  * @author Milan Boers
  * 
  */
-public class ChatsManager extends Observable {
+public class ChatsManager implements ConnectionManagerObserver {
 	private static final String TAG = "ChatsManager";
 
 	private static ChatsManager instance;
@@ -23,18 +28,26 @@ public class ChatsManager extends Observable {
 
 	private List<Chat> allChats;
 	private Queue<Chat> newChats;
+	
+	private List<ChatsManagerObserver> observers;
 
 	private ChatsManager() {
 		this.conManager = new IRCConnectionManager(this);
 
 		this.allChats = new ArrayList<Chat>();
 		this.newChats = new LinkedList<Chat>();
+		
+		this.observers = new CopyOnWriteArrayList<ChatsManagerObserver>();
 	}
 
 	public static ChatsManager getInstance() {
 		if (instance == null)
 			instance = new ChatsManager();
 		return instance;
+	}
+	
+	public void addObserver(ChatsManagerObserver observer) {
+		observers.add(observer);
 	}
 
 	/**
@@ -61,7 +74,7 @@ public class ChatsManager extends Observable {
 		this.addChat(chat);
 		this.conManager.sendChat(chat.text);
 	}
-
+	
 	/**
 	 * Adds a chat to the manager
 	 * 
@@ -71,8 +84,9 @@ public class ChatsManager extends Observable {
 		this.allChats.add(chat);
 		this.newChats.offer(chat);
 
-		this.setChanged();
-		this.notifyObservers();
+		for(ChatsManagerObserver observer : this.observers) {
+			observer.onChatsManagerNewChat(chat);
+		}
 	}
 
 	/**
@@ -100,12 +114,23 @@ public class ChatsManager extends Observable {
 
 		return fb;
 	}
-
-	public void onConnect() {
-
+	
+	@Override
+	public void onConManMessage(String channel, String sender, String login, String hostname, String message) {
+		this.addChat(new Chat(sender, message));
 	}
 
-	public void onDisconnect() {
+	@Override
+	public void onConManConnect() {
+		for(ChatsManagerObserver observer : this.observers) {
+			observer.onChatsManagerConnect();
+		}
+	}
 
+	@Override
+	public void onConManDisconnect() {
+		for(ChatsManagerObserver observer : this.observers) {
+			observer.onChatsManagerDisconnect();
+		}
 	}
 }
