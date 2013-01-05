@@ -38,11 +38,6 @@ public class IRCConnectionManager extends ConnectionManager implements IRCBotObs
 	}
 
 	@Override
-	public void onMessage(String channel, String sender, String login, String hostname, String message) {
-		this.chatsManager.addChat(new Chat(sender, message));
-	}
-
-	@Override
 	protected Void doInBackground(Void... arg0) {
 		try {
 			bot.connect("irc.freenode.net");
@@ -58,5 +53,20 @@ public class IRCConnectionManager extends ConnectionManager implements IRCBotObs
 		}
 		bot.joinChannel("##pytest");
 		return null;
+	}
+
+	@Override
+	public void onMessage(String channel, String sender, String login, String hostname, String message) {
+		this.chatsManager.addChat(new Chat(sender, message));
+	}
+
+	@Override
+	public void onConnect() {
+		this.chatsManager.onConnect();
+	}
+
+	@Override
+	public void onDisconnect() {
+		this.chatsManager.onDisconnect();
 	}
 }

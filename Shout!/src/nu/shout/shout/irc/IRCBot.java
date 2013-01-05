@@ -15,7 +15,18 @@ public class IRCBot extends PircBot {
 		this.observer = observer;
 	}
 
+	@Override
 	public void onMessage(String channel, String sender, String login, String hostname, String message) {
 		this.observer.onMessage(channel, sender, login, hostname, message);
+	}
+	
+	@Override
+	public void onConnect() {
+		this.observer.onConnect();
+	}
+	
+	@Override
+	public void onDisconnect() {
+		this.observer.onDisconnect();
 	}
 }

@@ -1,8 +1,10 @@
 package nu.shout.shout.chats;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Observable;
+import java.util.Queue;
 
 import android.util.Log;
 
@@ -18,11 +20,15 @@ public class ChatsManager extends Observable {
 	private static ChatsManager instance;
 
 	private ConnectionManager conManager;
-	private List<Chat> chats;
+
+	private List<Chat> allChats;
+	private Queue<Chat> newChats;
 
 	private ChatsManager() {
 		this.conManager = new IRCConnectionManager(this);
-		this.chats = new ArrayList<Chat>();
+
+		this.allChats = new ArrayList<Chat>();
+		this.newChats = new LinkedList<Chat>();
 	}
 
 	public static ChatsManager getInstance() {
@@ -62,7 +68,8 @@ public class ChatsManager extends Observable {
 	 * @param chat
 	 */
 	public void addChat(Chat chat) {
-		chats.add(chat);
+		this.allChats.add(chat);
+		this.newChats.offer(chat);
 
 		this.setChanged();
 		this.notifyObservers();
@@ -74,15 +81,31 @@ public class ChatsManager extends Observable {
 	 * @return
 	 */
 	public List<Chat> getChats() {
-		return chats;
+		return allChats;
 	}
 
 	/**
-	 * Get the last chat
+	 * Get new chats
 	 * 
 	 * @return
 	 */
-	public Chat getLastChat() {
-		return chats.get(chats.size() - 1);
+	public List<Chat> getNewChats() {
+		List<Chat> fb = new ArrayList<Chat>();
+
+		Chat nextChat = newChats.poll();
+		while (nextChat != null) {
+			fb.add(nextChat);
+			nextChat = newChats.poll();
+		}
+
+		return fb;
+	}
+
+	public void onConnect() {
+
+	}
+
+	public void onDisconnect() {
+
 	}
 }

@@ -1,5 +1,6 @@
 package nu.shout.shout;
 
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -105,8 +106,11 @@ public class MainActivity extends Activity implements Observer {
 	@Override
 	public void update(Observable arg0, Object arg1) {
 		if(arg0 instanceof ChatsManager) {
-			Chat lastChat = this.chatsManager.getLastChat();
-			addChatToBox(lastChat);
+			// Get all new chats
+			List<Chat> newChats = this.chatsManager.getNewChats();
+			for(Chat chat : newChats) {
+				addChatToBox(chat);
+			}
 		}
 	}
 
@@ -130,4 +134,15 @@ public class MainActivity extends Activity implements Observer {
 		});
 	}
     
+	/**
+	 * Adds a text to the chatbox
+	 * @param text
+	 */
+	public void addNoticeToBox(final String text) {
+		runOnUiThread(new Runnable() {
+			public void run() {
+				MainActivity.this.chatBox.append("\n" + text);
+			}
+		});
+	}
 }
