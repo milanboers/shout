@@ -6,5 +6,6 @@
     <string name="chatLineHint">Type something&#8230;</string>
     <string name="menu_settings">Settings</string>
     <string name="menu_connect">Connect</string>
+    <string name="menu_disconnect">Disconnect</string>
 
 </resources>

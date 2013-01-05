@@ -1,4 +1,4 @@
-package nu.shout.shout;
+package nu.shout.shout.chats;
 
 public class Chat {
 	public String nickname;

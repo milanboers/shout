@@ -3,7 +3,9 @@ package nu.shout.shout;
 import java.util.Observable;
 import java.util.Observer;
 
-import nu.shout.shout.irc.IRCManagerTask;
+import nu.shout.shout.chats.Chat;
+import nu.shout.shout.chats.ChatsManager;
+import nu.shout.shout.chats.IRCConnectionManager;
 
 import android.os.Bundle;
 import android.app.Activity;
@@ -23,7 +25,7 @@ public class MainActivity extends Activity implements Observer {
 	private static final String TAG = "MainActivity";
 	
 	private ChatsManager chatsManager;
-	private IRCManagerTask connectionManager;
+	//private IRCManagerTask connectionManager;
 	
 	private EditText chatLine;
 	private TextView chatBox;
@@ -35,7 +37,7 @@ public class MainActivity extends Activity implements Observer {
         setContentView(R.layout.activity_main);
         
         this.chatsManager = ChatsManager.getInstance();
-        this.connectionManager = IRCManagerTask.getInstance();
+        //this.connectionManager = IRCManagerTask.getInstance();
         
         this.chatLine = (EditText) findViewById(R.id.chatLine);
         this.chatBox = (TextView) findViewById(R.id.chatBox);
@@ -75,14 +77,6 @@ public class MainActivity extends Activity implements Observer {
 			}
         });
     }
-    
-    /**
-     * Fired when send button is hit. Sends the current line in the chatLine.
-     */
-    private void send() {
-		this.chatsManager.addChat(new Chat("me", this.chatLine.getText().toString()));
-		this.chatLine.setText("");
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -95,7 +89,10 @@ public class MainActivity extends Activity implements Observer {
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
     		case R.id.menu_connect:
-    			connectionManager.connect();
+    			chatsManager.connect();
+    			return true;
+    		case R.id.menu_disconnect:
+    			chatsManager.disconnect();
     			return true;
     		default:
     			return super.onOptionsItemSelected(item);
@@ -103,7 +100,7 @@ public class MainActivity extends Activity implements Observer {
     }
 
     /**
-     * Called when ChatsManager is updated
+     * Called when ChatsManager is updated (e.g. with a new chat)
      */
 	@Override
 	public void update(Observable arg0, Object arg1) {
@@ -112,13 +109,25 @@ public class MainActivity extends Activity implements Observer {
 			addChatToBox(lastChat);
 		}
 	}
+
+    /**
+     * Fired when send button is hit. Sends the current line in the chatLine.
+     */
+    private void send() {
+		this.chatsManager.sendChat(new Chat("me", this.chatLine.getText().toString()));
+		this.chatLine.setText("");
+    }
 	
 	/**
 	 * Adds a chat to the chatbox
 	 * @param chat chat to be added
 	 */
-	public void addChatToBox(Chat chat) {
-		this.chatBox.append("\n<" + chat.nickname + "> " + chat.text);
+	public void addChatToBox(final Chat chat) {
+		runOnUiThread(new Runnable() {
+			public void run() {
+				MainActivity.this.chatBox.append("\n<" + chat.nickname + "> " + chat.text);
+			}
+		});
 	}
     
 }
