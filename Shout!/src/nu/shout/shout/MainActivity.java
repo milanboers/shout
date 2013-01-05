@@ -45,15 +45,12 @@ public class MainActivity extends Activity implements ChatsManagerObserver {
         setupUI();
         
         // Register yourself to ChatsManager updates
-        Log.v(TAG, "adding observer");
         ChatsManager.getInstance().addObserver(this);
-        Log.v(TAG, "got observer");
         
         // Add existing chats to chatbox
         for(Chat chat : this.chatsManager.getChats()) {
         	this.addChatToBox(chat);
         }
-        Log.v(TAG, "end constructor");
     }
     
     private void setupUI() {
@@ -91,9 +88,11 @@ public class MainActivity extends Activity implements ChatsManagerObserver {
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
     		case R.id.menu_connect:
+    			this.addNoticeToBox(getString(R.string.notice_connecting));
     			chatsManager.connect();
     			return true;
     		case R.id.menu_disconnect:
+    			this.addNoticeToBox(getString(R.string.notice_disconnecting));
     			chatsManager.disconnect();
     			return true;
     		default:
@@ -140,13 +139,11 @@ public class MainActivity extends Activity implements ChatsManagerObserver {
 
 	@Override
 	public void onChatsManagerConnect() {
-		// TODO Auto-generated method stub
-		
+		this.addNoticeToBox(getString(R.string.notice_connected));
 	}
 
 	@Override
 	public void onChatsManagerDisconnect() {
-		// TODO Auto-generated method stub
-		
+		this.addNoticeToBox(getString(R.string.notice_disconnected));
 	}
 }
