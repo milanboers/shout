@@ -8,7 +8,9 @@ import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import nu.shout.shout.connection.ConnectionManager;
-import nu.shout.shout.connection.ConnectionManagerObserver;
+import nu.shout.shout.connection.ConnectionManager.OnConnectListener;
+import nu.shout.shout.connection.ConnectionManager.OnDisconnectListener;
+import nu.shout.shout.connection.ConnectionManager.OnMessageReceivedListener;
 import nu.shout.shout.connection.IRCConnectionManager;
 
 import android.util.Log;
@@ -19,7 +21,7 @@ import android.util.Log;
  * @author Milan Boers
  * 
  */
-public class ChatsManager implements ConnectionManagerObserver {
+public class ChatsManager {
 	private static final String TAG = "ChatsManager";
 
 	private static ChatsManager instance;
@@ -27,17 +29,77 @@ public class ChatsManager implements ConnectionManagerObserver {
 	private ConnectionManager conManager;
 
 	private List<Chat> allChats;
-	private Queue<Chat> newChats;
 	
-	private List<ChatsManagerObserver> observers;
+	/*
+	 * Events
+	 */
+	private List<OnNewChatListener> onNewChatListeners;
+	public static interface OnNewChatListener {
+		public void onNewChat(Chat chat);
+	}
+	public void setOnNewChatListener(OnNewChatListener l) {
+		this.onNewChatListeners.add(l);
+	}
+	private List<OnConnectListener> onConnectListeners;
+	public static interface OnConnectListener {
+		public void onConnect();
+	}
+	public void setOnConnectListener(OnConnectListener l) {
+		this.onConnectListeners.add(l);
+	}
+	private List<OnDisconnectListener> onDisconnectListeners;
+	public static interface OnDisconnectListener {
+		public void onDisconnect();
+	}
+	public void setOnDisconnectListeners(OnDisconnectListener l) {
+		this.onDisconnectListeners.add(l);
+	}
 
 	private ChatsManager() {
-		this.conManager = new IRCConnectionManager(this);
-
-		this.allChats = new ArrayList<Chat>();
-		this.newChats = new LinkedList<Chat>();
+		this.conManager = new IRCConnectionManager();
 		
-		this.observers = new CopyOnWriteArrayList<ChatsManagerObserver>();
+		this.allChats = new ArrayList<Chat>();
+		
+		/*
+		 * Events
+		 */
+		this.onNewChatListeners = new CopyOnWriteArrayList<OnNewChatListener>();
+		this.onConnectListeners = new CopyOnWriteArrayList<OnConnectListener>();
+		this.onDisconnectListeners = new CopyOnWriteArrayList<OnDisconnectListener>();
+		
+		this.connectListeners();
+	}
+	
+	private void connectListeners() {
+		connectConnectionManagerListeners();
+	}
+	
+	/**
+	 * Connects the listeners of ConnectionManager. Separated because these need to be reconnected if connection resets.
+	 */
+	private void connectConnectionManagerListeners() {
+		this.conManager.setOnMessageReceivedListener(new OnMessageReceivedListener() {
+			@Override
+			public void onMessageReceived(String channel, String sender, String login, String hostname, String message) {
+				ChatsManager.this.addChat(new Chat(sender, message));
+			}
+		});
+		this.conManager.setOnConnectListener(new ConnectionManager.OnConnectListener() {
+			@Override
+			public void onConnect() {
+				for(OnConnectListener l : ChatsManager.this.onConnectListeners) {
+					l.onConnect();
+				}
+			}
+		});
+		this.conManager.setOnDisconnectListener(new ConnectionManager.OnDisconnectListener() {
+			@Override
+			public void onDisconnect() {
+				for(OnDisconnectListener l : ChatsManager.this.onDisconnectListeners) {
+					l.onDisconnect();
+				}
+			}
+		});
 	}
 
 	public static ChatsManager getInstance() {
@@ -45,16 +107,16 @@ public class ChatsManager implements ConnectionManagerObserver {
 			instance = new ChatsManager();
 		return instance;
 	}
-	
-	public void addObserver(ChatsManagerObserver observer) {
-		observers.add(observer);
-	}
 
 	/**
 	 * Makes the connection connect
 	 */
 	public void connect() {
-		this.conManager = new IRCConnectionManager(this);
+		this.conManager = new IRCConnectionManager();
+		
+		// Need to reconnect the ConnectionManager listeners
+		this.connectConnectionManagerListeners();
+		
 		this.conManager.connect();
 	}
 
@@ -82,10 +144,9 @@ public class ChatsManager implements ConnectionManagerObserver {
 	 */
 	public void addChat(Chat chat) {
 		this.allChats.add(chat);
-		this.newChats.offer(chat);
 
-		for(ChatsManagerObserver observer : this.observers) {
-			observer.onChatsManagerNewChat(chat);
+		for(OnNewChatListener l : this.onNewChatListeners) {
+			l.onNewChat(chat);
 		}
 	}
 
@@ -96,41 +157,5 @@ public class ChatsManager implements ConnectionManagerObserver {
 	 */
 	public List<Chat> getChats() {
 		return allChats;
-	}
-
-	/**
-	 * Get new chats
-	 * 
-	 * @return
-	 */
-	public List<Chat> getNewChats() {
-		List<Chat> fb = new ArrayList<Chat>();
-
-		Chat nextChat = newChats.poll();
-		while (nextChat != null) {
-			fb.add(nextChat);
-			nextChat = newChats.poll();
-		}
-
-		return fb;
-	}
-	
-	@Override
-	public void onConManMessage(String channel, String sender, String login, String hostname, String message) {
-		this.addChat(new Chat(sender, message));
-	}
-
-	@Override
-	public void onConManConnect() {
-		for(ChatsManagerObserver observer : this.observers) {
-			observer.onChatsManagerConnect();
-		}
-	}
-
-	@Override
-	public void onConManDisconnect() {
-		for(ChatsManagerObserver observer : this.observers) {
-			observer.onChatsManagerDisconnect();
-		}
 	}
 }

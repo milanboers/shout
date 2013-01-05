@@ -3,22 +3,51 @@ package nu.shout.shout.connection;
 import java.io.IOException;
 
 import nu.shout.shout.irc.IRCBot;
-import nu.shout.shout.irc.IRCBotObserver;
+import nu.shout.shout.irc.IRCBot.OnMessageListener;
 
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
 
 import android.util.Log;
 
-public class IRCConnectionManager extends ConnectionManager implements IRCBotObserver {
+public class IRCConnectionManager extends ConnectionManager {
 	private static final String TAG = "IRCManagerTask";
 
-	private ConnectionManagerObserver observer;
 	private IRCBot bot;
 
-	public IRCConnectionManager(ConnectionManagerObserver observer) {
-		this.observer = observer;
-		this.bot = new IRCBot(this);
+	public IRCConnectionManager() {
+		super();
+		
+		this.bot = new IRCBot();
+		
+		this.connectListeners();
+	}
+	
+	public void connectListeners() {
+		this.bot.setOnMessageListener(new OnMessageListener() {
+			@Override
+			public void onMessage(String channel, String sender, String login, String hostname, String message) {
+				for(OnMessageReceivedListener l : IRCConnectionManager.this.onMessageReceivedListeners) {
+					l.onMessageReceived(channel, sender, login, hostname, message);
+				}
+			}
+		});
+		this.bot.setOnConnectListener(new IRCBot.OnConnectListener() {
+			@Override
+			public void onConnect() {
+				for(OnConnectListener l : IRCConnectionManager.this.onConnectListeners) {
+					l.onConnect();
+				}
+			}
+		});
+		this.bot.setOnDisconnectListener(new IRCBot.OnDisconnectListener() {
+			@Override
+			public void onDisconnect() {
+				for(OnDisconnectListener l : IRCConnectionManager.this.onDisconnectListeners) {
+					l.onDisconnect();
+				}
+			}
+		});
 	}
 
 	@Override
@@ -52,20 +81,5 @@ public class IRCConnectionManager extends ConnectionManager implements IRCBotObs
 		}
 		this.bot.joinChannel("##pytest");
 		return null;
-	}
-
-	@Override
-	public void onIrcBotMessage(String channel, String sender, String login, String hostname, String message) {
-		this.observer.onConManMessage(channel, sender, login, hostname, message);
-	}
-
-	@Override
-	public void onIrcBotConnect() {
-		this.observer.onConManConnect();
-	}
-
-	@Override
-	public void onIrcBotDisconnect() {
-		this.observer.onConManDisconnect();
 	}
 }

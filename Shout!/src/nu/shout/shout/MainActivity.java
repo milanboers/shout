@@ -6,7 +6,9 @@ import java.util.Observer;
 
 import nu.shout.shout.chats.Chat;
 import nu.shout.shout.chats.ChatsManager;
-import nu.shout.shout.chats.ChatsManagerObserver;
+import nu.shout.shout.chats.ChatsManager.OnConnectListener;
+import nu.shout.shout.chats.ChatsManager.OnDisconnectListener;
+import nu.shout.shout.chats.ChatsManager.OnNewChatListener;
 
 import android.os.Bundle;
 import android.app.Activity;
@@ -22,7 +24,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
-public class MainActivity extends Activity implements ChatsManagerObserver {
+public class MainActivity extends Activity {
 	private static final String TAG = "MainActivity";
 	
 	private ChatsManager chatsManager;
@@ -44,8 +46,7 @@ public class MainActivity extends Activity implements ChatsManagerObserver {
         
         setupUI();
         
-        // Register yourself to ChatsManager updates
-        ChatsManager.getInstance().addObserver(this);
+        connectListeners();
         
         // Add existing chats to chatbox
         for(Chat chat : this.chatsManager.getChats()) {
@@ -77,6 +78,27 @@ public class MainActivity extends Activity implements ChatsManagerObserver {
         });
     }
 
+    private void connectListeners() {
+    	this.chatsManager.setOnNewChatListener(new OnNewChatListener() {
+			@Override
+			public void onNewChat(Chat chat) {
+				MainActivity.this.addChatToBox(chat);
+			}
+    	});
+    	this.chatsManager.setOnConnectListener(new OnConnectListener() {
+			@Override
+			public void onConnect() {
+				MainActivity.this.addNoticeToBox(getString(R.string.notice_connected));
+			}
+    	});
+    	this.chatsManager.setOnDisconnectListeners(new OnDisconnectListener() {
+			@Override
+			public void onDisconnect() {
+				MainActivity.this.addNoticeToBox(getString(R.string.notice_disconnected));
+			}
+    	});
+    }
+    
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -130,20 +152,5 @@ public class MainActivity extends Activity implements ChatsManagerObserver {
 				MainActivity.this.chatBox.append("\n" + text);
 			}
 		});
-	}
-
-	@Override
-	public void onChatsManagerNewChat(Chat chat) {
-		this.addChatToBox(chat);
-	}
-
-	@Override
-	public void onChatsManagerConnect() {
-		this.addNoticeToBox(getString(R.string.notice_connected));
-	}
-
-	@Override
-	public void onChatsManagerDisconnect() {
-		this.addNoticeToBox(getString(R.string.notice_disconnected));
 	}
 }
