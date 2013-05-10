@@ -30,6 +30,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.TextView.OnEditorActionListener;
 
 public class ChatActivity extends Activity implements IRCListener, LocationListener {
@@ -58,7 +59,7 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
         
         this.bf = new BuildingFetcher();
         
-        this.irc = new IRCConnection();
+        this.irc = new IRCConnection(getIntent().getExtras().getString("nickname"));
         IRCListenerAdapter adapter = new IRCListenerAdapter(this);
         this.irc.getListenerManager().addListener(adapter);
         
@@ -177,20 +178,21 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
 				try {
 					return ChatActivity.this.bf.getBuildings(loc);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					Log.v(TAG, "IOException");
 				}
 				return null;
 			}
 			
 			@Override
 			protected void onPostExecute(List<Building> buildings) {
-				// TODO: wat als buildings == null
-				if(buildings.size() == 0) {
-					// TODO: error?
-					return;
+				if(buildings == null) {
 				}
-				if(ChatActivity.this.irc.getChannel() != buildings.get(0).ircroom) {
+				else if(buildings.size() == 0) {
+					// TODO: misschie niet elke keer weergeven maar 1 keer?
+					ChatActivity.this.irc.partAllChannels();
+					ChatActivity.this.addNoticeToBox(getString(R.string.error_nobuildings));
+				}
+				else if(ChatActivity.this.irc.getChannel() != buildings.get(0).ircroom) {
 					ChatActivity.this.irc.joinChannel(buildings.get(0).ircroom);
 				}
 			}
@@ -200,19 +202,13 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
 
 	@Override
 	public void onProviderDisabled(String arg0) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void onProviderEnabled(String arg0) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
-		// TODO Auto-generated method stub
-		
 	}
 }

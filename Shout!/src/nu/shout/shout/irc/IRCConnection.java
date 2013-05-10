@@ -16,10 +16,10 @@ public class IRCConnection extends PircBotX {
 	// The current channel (Shout will only connect to one channel)
 	private String channel;
 
-	public IRCConnection() {
+	public IRCConnection(String nickname) {
 		super();
 		
-		this.setName("ShoutUser");
+		this.setName(nickname);
 	}
 	
 	public void sendMessage(String message) {
@@ -55,12 +55,17 @@ public class IRCConnection extends PircBotX {
 		};
 		connectTask.execute();
 	}
+	
+	public void partAllChannels() {
+		for(Channel c : this.getChannels())
+			this.partChannel(c);
+		this.channel = null;
+	}
 
 	@Override
 	public void joinChannel(String channel) {
 		if(!this.getChannelsNames().contains(channel)) {
-			for(Channel c : this.getChannels())
-				this.partChannel(c);
+			this.partAllChannels();
 			super.joinChannel(channel);
 			this.channel = channel;
 			Log.v(TAG, "Changed channel to " + channel);
