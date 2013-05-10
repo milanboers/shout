@@ -1,6 +1,6 @@
 package nu.shout.shout;
 
-import nu.shout.shout.connection.IRCConnection;
+import nu.shout.shout.irc.IRCConnection;
 
 import org.pircbotx.hooks.events.ConnectEvent;
 import org.pircbotx.hooks.events.DisconnectEvent;

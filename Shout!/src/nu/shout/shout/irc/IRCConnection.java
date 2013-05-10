@@ -1,7 +1,8 @@
-package nu.shout.shout.connection;
+package nu.shout.shout.irc;
 
 import java.io.IOException;
 
+import org.pircbotx.Channel;
 import org.pircbotx.PircBotX;
 import org.pircbotx.exception.IrcException;
 import org.pircbotx.exception.NickAlreadyInUseException;
@@ -22,6 +23,7 @@ public class IRCConnection extends PircBotX {
 	}
 	
 	public void sendMessage(String message) {
+		// TODO: wat als channel == null?
 		this.sendMessage(channel, message);
 	}
 	
@@ -32,7 +34,6 @@ public class IRCConnection extends PircBotX {
 				try {
 					Log.v(TAG, "Connecting");
 					IRCConnection.this.connect("shout.nu");
-					Log.v(TAG, "Connected");
 				} catch (NickAlreadyInUseException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -45,31 +46,28 @@ public class IRCConnection extends PircBotX {
 				}
 				return null;
 			}
+			
+			@Override
+			protected void onPostExecute(Void v) {
+				if(IRCConnection.this.channel != null)
+					IRCConnection.this.joinChannel(IRCConnection.this.channel);
+			}
 		};
 		connectTask.execute();
 	}
 
 	@Override
 	public void joinChannel(String channel) {
-		super.joinChannel(channel);
-		this.channel = channel;
+		if(!this.getChannelsNames().contains(channel)) {
+			for(Channel c : this.getChannels())
+				this.partChannel(c);
+			super.joinChannel(channel);
+			this.channel = channel;
+			Log.v(TAG, "Changed channel to " + channel);
+		}
 	}
 	
-	/*
-	@Override
-	public void connect() {
-		// TODO: IN BACKGROUND
-		this.bot.connect("shout.nu", 6667);
-		this.bot.joinChannel("#koning");
+	public String getChannel() {
+		return this.channel;
 	}
-
-	@Override
-	public void disconnect() {
-		//this.session.close("I won't be back");
-	}
-
-	@Override
-	public void sendChat(String message) {
-		//this.session.sayChannel(this.session.getChannel("#koning"), message);
-	}*/
 }
