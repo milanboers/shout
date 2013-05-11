@@ -7,6 +7,10 @@ import org.pircbotx.hooks.events.ConnectEvent;
 import org.pircbotx.hooks.events.DisconnectEvent;
 import org.pircbotx.hooks.events.MessageEvent;
 
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
+
 import nu.shout.shout.IRCListener;
 import nu.shout.shout.IRCListenerAdapter;
 import nu.shout.shout.R;
@@ -19,13 +23,10 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
@@ -33,7 +34,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
-public class ChatActivity extends Activity implements IRCListener, LocationListener {
+public class ChatActivity extends SherlockActivity implements IRCListener, LocationListener {
 	@SuppressWarnings("unused")
 	private static final String TAG = "ChatActivity";
 	
@@ -104,7 +105,7 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.activity_chat, menu);
+        getSupportMenuInflater().inflate(R.menu.activity_chat, menu);
         return true;
     }
     
@@ -141,7 +142,6 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
 	@Override
 	public void onConnect(ConnectEvent<IRCConnection> event) {
 		this.chatBox.addNotice("Connected!");
-		this.irc.joinCurrentChannel();
 	}
 
 	@Override
