@@ -4,7 +4,9 @@ import nu.shout.shout.chat.ChatActivity;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -16,11 +18,16 @@ public class MainActivity extends Activity {
 	private static final String TAG = "MainActivity";
 	
 	private EditText nicknameView;
+	
+	private SharedPreferences prefs;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+        
+        this.prefs = getSharedPreferences("nu.shout.shout", Context.MODE_PRIVATE);
+        this.prefs.edit().putBoolean("debug", true).commit();
 		
 		this.nicknameView = (EditText) findViewById(R.id.main_nickname);
 		

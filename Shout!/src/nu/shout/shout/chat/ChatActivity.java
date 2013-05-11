@@ -20,6 +20,8 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -50,12 +52,16 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
 	
 	private BuildingFetcher bf;
 	
+	private SharedPreferences prefs;
+	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
         
         this.bf = new BuildingFetcher();
+        
+        this.prefs = getSharedPreferences("nu.shout.shout", Context.MODE_PRIVATE);
         
         this.irc = new IRCConnection(getIntent().getExtras().getString("nickname"));
         IRCListenerAdapter adapter = new IRCListenerAdapter(this);
@@ -145,7 +151,9 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
 
 	@Override
 	public void onLocationChanged(final Location loc) {
-		Log.v(TAG, "Lat: " + loc.getLatitude() + " lon: " + loc.getLongitude());
+		Log.v(TAG, "DEBUG: New location lat " + loc.getLatitude() + " lon " + loc.getLongitude());
+		if(this.prefs.getBoolean("debug", false))
+			this.chatBox.addNotice("DEBUG: New location lat " + loc.getLatitude() + " lon " + loc.getLongitude());
 		
 		AsyncTask<Void, Void, List<Building>> locTask = new AsyncTask<Void, Void, List<Building>>() {
 			@Override
@@ -166,9 +174,9 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
 					// TODO: misschien niet elke keer weergeven maar 1 keer?
 					ChatActivity.this.irc.partAllChannels();
 					ChatActivity.this.chatBox.addNotice(getString(R.string.error_nobuildings));
-				} else {
+				} else if(!buildings.get(0).ircroom.equals(ChatActivity.this.irc.getChannel())) {
 					ChatActivity.this.irc.joinChannel(buildings.get(0).ircroom);
-					ChatActivity.this.chatBox.addNotice("In channel " + buildings.get(0).name);
+					ChatActivity.this.chatBox.addNotice("Joined channel " + buildings.get(0).ircroom);
 				}
 			}
 		};
