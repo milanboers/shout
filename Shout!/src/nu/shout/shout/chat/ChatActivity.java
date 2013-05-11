@@ -1,6 +1,7 @@
 package nu.shout.shout.chat;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.pircbotx.hooks.events.ConnectEvent;
@@ -10,6 +11,11 @@ import org.pircbotx.hooks.events.MessageEvent;
 import nu.shout.shout.IRCListener;
 import nu.shout.shout.IRCListenerAdapter;
 import nu.shout.shout.R;
+import nu.shout.shout.chat.box.ChatBox;
+import nu.shout.shout.chat.box.ChatBoxAdapter;
+import nu.shout.shout.chat.box.items.ChatBoxChat;
+import nu.shout.shout.chat.box.items.ChatBoxItem;
+import nu.shout.shout.chat.box.items.ChatBoxNotice;
 import nu.shout.shout.irc.IRCConnection;
 import nu.shout.shout.location.Building;
 import nu.shout.shout.location.BuildingFetcher;
@@ -45,8 +51,11 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
 	private IRCConnection irc;
 	
 	private EditText chatLine;
-	private TextView chatBox;
 	private Button sendButton;
+	private ChatBox chatBox;
+	
+	private List<ChatBoxItem> chatBoxItems = new ArrayList<ChatBoxItem>();
+	private ChatBoxAdapter chatBoxAdapter;
 	
 	private LocationManager lm;
 	
@@ -64,22 +73,21 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
         this.irc.getListenerManager().addListener(adapter);
         
         this.chatLine = (EditText) findViewById(R.id.chatLine);
-        this.chatBox = (TextView) findViewById(R.id.chatBox);
         this.sendButton = (Button) findViewById(R.id.sendButton);
         
+        this.chatBox = (ChatBox) findViewById(R.id.chatBox);
+        this.chatBoxAdapter = new ChatBoxAdapter(this, this.chatBoxItems);
+        this.chatBox.setAdapter(this.chatBoxAdapter);
+        
         this.lm = (LocationManager) getSystemService(LOCATION_SERVICE);
-        String provider = this.lm.getBestProvider(new Criteria(), false);
-        this.lm.requestLocationUpdates(provider, TIME_BETWEEN_LOC, DIST_BETWEEN_LOC, this);
+        this.lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, TIME_BETWEEN_LOC, DIST_BETWEEN_LOC, this);
         // Pick last known location
-        this.onLocationChanged(this.lm.getLastKnownLocation(provider));
+        this.onLocationChanged(this.lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
         
         setupUI();
     }
     
     private void setupUI() {
-    	// Make chatbox scrollable
-        this.chatBox.setMovementMethod(new ScrollingMovementMethod());
-        
         this.sendButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -139,7 +147,8 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
 	public void addNoticeToBox(final String text) {
 		runOnUiThread(new Runnable() {
 			public void run() {
-				ChatActivity.this.chatBox.append("\n" + text);
+				ChatActivity.this.chatBoxItems.add(new ChatBoxNotice(text));
+				ChatActivity.this.chatBoxAdapter.notifyDataSetChanged();
 			}
 		});
 	}
@@ -147,7 +156,8 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
 	public void addChatToBox(final String name, final String text) {
 		runOnUiThread(new Runnable() {
 			public void run(){ 
-				ChatActivity.this.chatBox.append("\n<" + name + "> " + text);
+				ChatActivity.this.chatBoxItems.add(new ChatBoxChat(name, text));
+				ChatActivity.this.chatBoxAdapter.notifyDataSetChanged();
 			}
 		});
 	}
@@ -194,6 +204,7 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
 				}
 				else if(ChatActivity.this.irc.getChannel() != buildings.get(0).ircroom) {
 					ChatActivity.this.irc.joinChannel(buildings.get(0).ircroom);
+					addNoticeToBox("In channel " + buildings.get(0).name);
 				}
 			}
 		};
