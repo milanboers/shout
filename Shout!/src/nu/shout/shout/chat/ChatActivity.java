@@ -1,7 +1,6 @@
 package nu.shout.shout.chat;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.pircbotx.hooks.events.ConnectEvent;
@@ -12,21 +11,15 @@ import nu.shout.shout.IRCListener;
 import nu.shout.shout.IRCListenerAdapter;
 import nu.shout.shout.R;
 import nu.shout.shout.chat.box.ChatBox;
-import nu.shout.shout.chat.box.ChatBoxAdapter;
-import nu.shout.shout.chat.box.items.ChatBoxChat;
-import nu.shout.shout.chat.box.items.ChatBoxItem;
-import nu.shout.shout.chat.box.items.ChatBoxNotice;
 import nu.shout.shout.irc.IRCConnection;
 import nu.shout.shout.location.Building;
 import nu.shout.shout.location.BuildingFetcher;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -36,7 +29,6 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.TextView.OnEditorActionListener;
 
 public class ChatActivity extends Activity implements IRCListener, LocationListener {
@@ -53,9 +45,6 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
 	private EditText chatLine;
 	private Button sendButton;
 	private ChatBox chatBox;
-	
-	private List<ChatBoxItem> chatBoxItems = new ArrayList<ChatBoxItem>();
-	private ChatBoxAdapter chatBoxAdapter;
 	
 	private LocationManager lm;
 	
@@ -76,8 +65,6 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
         this.sendButton = (Button) findViewById(R.id.sendButton);
         
         this.chatBox = (ChatBox) findViewById(R.id.chatBox);
-        this.chatBoxAdapter = new ChatBoxAdapter(this, this.chatBoxItems);
-        this.chatBox.setAdapter(this.chatBoxAdapter);
         
         this.lm = (LocationManager) getSystemService(LOCATION_SERVICE);
         this.lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, TIME_BETWEEN_LOC, DIST_BETWEEN_LOC, this);
@@ -119,11 +106,11 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
     		case R.id.menu_connect:
-    			this.addNoticeToBox(getString(R.string.notice_connecting));
+    			this.chatBox.addNotice(getString(R.string.notice_connecting));
     			this.irc.connect();
     			return true;
     		case R.id.menu_disconnect:
-    			this.addNoticeToBox(getString(R.string.notice_disconnecting));
+    			this.chatBox.addNotice(getString(R.string.notice_disconnecting));
     			this.irc.disconnect();
     			return true;
     		default:
@@ -136,46 +123,24 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
      */
     private void send() {
     	this.irc.sendMessage(this.chatLine.getText().toString());
-    	this.addChatToBox("me", this.chatLine.getText().toString());
+    	this.chatBox.addChat("me", this.chatLine.getText().toString());
 		this.chatLine.setText("");
     }
-    
-	/**
-	 * Adds a text to the chatbox
-	 * @param text
-	 */
-	public void addNoticeToBox(final String text) {
-		runOnUiThread(new Runnable() {
-			public void run() {
-				ChatActivity.this.chatBoxItems.add(new ChatBoxNotice(text));
-				ChatActivity.this.chatBoxAdapter.notifyDataSetChanged();
-			}
-		});
-	}
-	
-	public void addChatToBox(final String name, final String text) {
-		runOnUiThread(new Runnable() {
-			public void run(){ 
-				ChatActivity.this.chatBoxItems.add(new ChatBoxChat(name, text));
-				ChatActivity.this.chatBoxAdapter.notifyDataSetChanged();
-			}
-		});
-	}
 
 	@Override
 	public void onMessage(final MessageEvent<IRCConnection> event) {
-		addChatToBox(event.getUser().getNick(), event.getMessage());
+		this.chatBox.addChat(event.getUser().getNick(), event.getMessage());
 	}
 
 	@Override
 	public void onConnect(ConnectEvent<IRCConnection> event) {
-		addNoticeToBox("Connected!");
-		this.irc.joinChannel(this.irc.getChannel());
+		this.chatBox.addNotice("Connected!");
+		this.irc.joinCurrentChannel();
 	}
 
 	@Override
 	public void onDisconnect(DisconnectEvent<IRCConnection> event) {
-		addNoticeToBox("Disconnected!");
+		this.chatBox.addNotice("Disconnected!");
 	}
 
 	@Override
@@ -188,6 +153,7 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
 				try {
 					return ChatActivity.this.bf.getBuildings(loc);
 				} catch (IOException e) {
+					// TODO: afvangen
 					Log.v(TAG, "IOException");
 				}
 				return null;
@@ -196,15 +162,13 @@ public class ChatActivity extends Activity implements IRCListener, LocationListe
 			@Override
 			protected void onPostExecute(List<Building> buildings) {
 				if(buildings == null) {
-				}
-				else if(buildings.size() == 0) {
-					// TODO: misschie niet elke keer weergeven maar 1 keer?
+				} else if(buildings.size() == 0) {
+					// TODO: misschien niet elke keer weergeven maar 1 keer?
 					ChatActivity.this.irc.partAllChannels();
-					ChatActivity.this.addNoticeToBox(getString(R.string.error_nobuildings));
-				}
-				else if(ChatActivity.this.irc.getChannel() != buildings.get(0).ircroom) {
+					ChatActivity.this.chatBox.addNotice(getString(R.string.error_nobuildings));
+				} else {
 					ChatActivity.this.irc.joinChannel(buildings.get(0).ircroom);
-					addNoticeToBox("In channel " + buildings.get(0).name);
+					ChatActivity.this.chatBox.addNotice("In channel " + buildings.get(0).name);
 				}
 			}
 		};

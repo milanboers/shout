@@ -62,14 +62,20 @@ public class IRCConnection extends PircBotX {
 		this.channel = null;
 	}
 
-	@Override
 	public void joinChannel(String channel) {
-		if(!this.getChannelsNames().contains(channel)) {
-			this.partAllChannels();
-			super.joinChannel(channel);
+		if(!channel.equals(this.channel)) {
+			if(this.isConnected()) {
+				this.partAllChannels();
+				super.joinChannel(channel);
+				Log.v(TAG, "Changed channel to " + channel);
+			}
 			this.channel = channel;
-			Log.v(TAG, "Changed channel to " + channel);
 		}
+	}
+	
+	public void joinCurrentChannel() {
+		if(this.channel != null)
+			super.joinChannel(this.channel);
 	}
 	
 	public String getChannel() {
