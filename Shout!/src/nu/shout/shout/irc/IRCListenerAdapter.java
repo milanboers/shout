@@ -1,6 +1,5 @@
-package nu.shout.shout;
+package nu.shout.shout.irc;
 
-import nu.shout.shout.irc.IRCConnection;
 
 import org.pircbotx.hooks.ListenerAdapter;
 import org.pircbotx.hooks.events.ConnectEvent;

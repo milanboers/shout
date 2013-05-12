@@ -28,7 +28,7 @@ public class IRCConnection extends PircBotX {
 	}
 	
 	public void connect() {
-		AsyncTask<Void, Void, Void> connectTask = new AsyncTask<Void, Void, Void>() {
+		new AsyncTask<Void, Void, Void>() {
 			@Override
 			protected Void doInBackground(Void... arg0) {
 				try {
@@ -52,8 +52,7 @@ public class IRCConnection extends PircBotX {
 				if(IRCConnection.this.channel != null)
 					IRCConnection.this.joinChannel(IRCConnection.this.channel);
 			}
-		};
-		connectTask.execute();
+		}.execute();
 	}
 	
 	public void partAllChannels() {

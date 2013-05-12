@@ -19,6 +19,7 @@ public class ChatBox extends ListView {
 		super(context, attrs);
 		
 		this.setAdapter(new ChatBoxAdapter(context, this.chatBoxItems));
+		this.setStackFromBottom(true);
 	}
 	
 	/**
@@ -26,7 +27,7 @@ public class ChatBox extends ListView {
 	 * @param text
 	 */
 	public void addNotice(final String text) {
-		Activity activity = (Activity) getContext();
+		final Activity activity = (Activity) getContext();
 		activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
@@ -37,7 +38,7 @@ public class ChatBox extends ListView {
 	}
     
 	public void addChat(final String name, final String text) {
-		Activity activity = (Activity) getContext();
+		final Activity activity = (Activity) getContext();
 		activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {

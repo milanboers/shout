@@ -10,12 +10,13 @@ import org.pircbotx.hooks.events.MessageEvent;
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
 
-import nu.shout.shout.IRCListener;
-import nu.shout.shout.IRCListenerAdapter;
 import nu.shout.shout.R;
 import nu.shout.shout.chat.box.ChatBox;
 import nu.shout.shout.irc.IRCConnection;
+import nu.shout.shout.irc.IRCListener;
+import nu.shout.shout.irc.IRCListenerAdapter;
 import nu.shout.shout.location.Building;
 import nu.shout.shout.location.BuildingFetcher;
 import android.location.Location;
@@ -58,6 +59,7 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.activity_chat);
         
         this.bf = new BuildingFetcher();
@@ -113,10 +115,12 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
     		case R.id.menu_connect:
+    			setProgressBarIndeterminateVisibility(true);
     			this.chatBox.addNotice(getString(R.string.notice_connecting));
     			this.irc.connect();
     			return true;
     		case R.id.menu_disconnect:
+    			setProgressBarIndeterminateVisibility(true);
     			this.chatBox.addNotice(getString(R.string.notice_disconnecting));
     			this.irc.disconnect();
     			return true;
@@ -134,18 +138,33 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 		this.chatLine.setText("");
     }
 
+    // IN THREAD
 	@Override
 	public void onMessage(final MessageEvent<IRCConnection> event) {
 		this.chatBox.addChat(event.getUser().getNick(), event.getMessage());
 	}
 
+	// IN THREAD
 	@Override
 	public void onConnect(ConnectEvent<IRCConnection> event) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				setProgressBarIndeterminateVisibility(false);
+			}
+		});
 		this.chatBox.addNotice("Connected!");
 	}
 
+	// IN THREAD
 	@Override
 	public void onDisconnect(DisconnectEvent<IRCConnection> event) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				setProgressBarIndeterminateVisibility(false);
+			}
+		});
 		this.chatBox.addNotice("Disconnected!");
 	}
 
@@ -155,7 +174,7 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 		if(this.prefs.getBoolean("debug", false))
 			this.chatBox.addNotice("DEBUG: New location lat " + loc.getLatitude() + " lon " + loc.getLongitude());
 		
-		AsyncTask<Void, Void, List<Building>> locTask = new AsyncTask<Void, Void, List<Building>>() {
+		new AsyncTask<Void, Void, List<Building>>() {
 			@Override
 			protected List<Building> doInBackground(Void... arg0) {
 				try {
@@ -179,8 +198,7 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 					ChatActivity.this.chatBox.addNotice("Joined channel " + buildings.get(0).ircroom);
 				}
 			}
-		};
-		locTask.execute();
+		}.execute();
 	}
 
 	@Override
