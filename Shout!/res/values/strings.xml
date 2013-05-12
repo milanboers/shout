@@ -11,6 +11,8 @@
     <string name="notice_connected">Connected</string>
     <string name="notice_disconnecting">Disconnecting…</string>
     <string name="notice_disconnected">Disconnected</string>
+    <string name="notice_already_connected">You are already connected. Idiot.</string>
+    <string name="notice_not_connected">You are not connected. Idiot.</string>
     <string name="title_activity_chat">ChatActivity</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>

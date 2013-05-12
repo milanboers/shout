@@ -81,6 +81,8 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
         this.onLocationChanged(this.lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
         
         setupUI();
+        
+        connect();
     }
     
     private void setupUI() {
@@ -115,14 +117,10 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
     		case R.id.menu_connect:
-    			setProgressBarIndeterminateVisibility(true);
-    			this.chatBox.addNotice(getString(R.string.notice_connecting));
-    			this.irc.connect();
+    			connect();
     			return true;
     		case R.id.menu_disconnect:
-    			setProgressBarIndeterminateVisibility(true);
-    			this.chatBox.addNotice(getString(R.string.notice_disconnecting));
-    			this.irc.disconnect();
+    			disconnect();
     			return true;
     		default:
     			return super.onOptionsItemSelected(item);
@@ -136,6 +134,26 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
     	this.irc.sendMessage(this.chatLine.getText().toString());
     	this.chatBox.addChat("me", this.chatLine.getText().toString());
 		this.chatLine.setText("");
+    }
+    
+    public void connect() {
+    	if(this.irc.isConnected()) {
+    		this.chatBox.addNotice(getString(R.string.notice_already_connected));
+    		return;
+    	}
+    	setProgressBarIndeterminateVisibility(true);
+		this.chatBox.addNotice(getString(R.string.notice_connecting));
+		this.irc.connect();
+    }
+    
+    public void disconnect() {
+    	if(!this.irc.isConnected()) {
+    		this.chatBox.addNotice(getString(R.string.notice_not_connected));
+    		return;
+    	}
+    	setProgressBarIndeterminateVisibility(true);
+		this.chatBox.addNotice(getString(R.string.notice_disconnecting));
+		this.irc.disconnect();
     }
 
     // IN THREAD

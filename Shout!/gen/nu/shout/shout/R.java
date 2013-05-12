@@ -1052,22 +1052,24 @@ containing a value of this type.
         /**  Description of a share target (both in the list of such or the default share button) in a ShareActionProvider (share UI). [CHAR LIMIT=NONE] 
          */
         public static final int abs__shareactionprovider_share_with_application=0x7f090007;
-        public static final int action_settings=0x7f090018;
+        public static final int action_settings=0x7f09001a;
         public static final int app_name=0x7f09000d;
         public static final int chatLineHint=0x7f09000f;
-        public static final int enter_chat=0x7f09001c;
-        public static final int error_nobuildings=0x7f09001a;
-        public static final int hello_world=0x7f090019;
+        public static final int enter_chat=0x7f09001e;
+        public static final int error_nobuildings=0x7f09001c;
+        public static final int hello_world=0x7f09001b;
         public static final int menu_connect=0x7f090011;
         public static final int menu_disconnect=0x7f090012;
         public static final int menu_settings=0x7f090010;
-        public static final int nickname=0x7f09001b;
+        public static final int nickname=0x7f09001d;
+        public static final int notice_already_connected=0x7f090017;
         public static final int notice_connected=0x7f090014;
         public static final int notice_connecting=0x7f090013;
         public static final int notice_disconnected=0x7f090016;
         public static final int notice_disconnecting=0x7f090015;
+        public static final int notice_not_connected=0x7f090018;
         public static final int send=0x7f09000e;
-        public static final int title_activity_chat=0x7f090017;
+        public static final int title_activity_chat=0x7f090019;
     }
     public static final class style {
         /** 
