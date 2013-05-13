@@ -35,10 +35,24 @@ public class ChatMentionNotification {
      		.setContentText(this.ctx.getString(R.string.noti_not_in_channel))
      		.setAutoCancel(true)
      		.setContentIntent(i);
+		
+		this.applySettings();
+	}
+	
+	private void applySettings() {
+		int defaults = 0;
+		if(this.prefs.getBoolean("noti_sound", true))
+			defaults |= Notification.DEFAULT_SOUND;
+		if(this.prefs.getBoolean("noti_vibrate", true))
+			defaults |= Notification.DEFAULT_VIBRATE;
+		if(this.prefs.getBoolean("noti_light", true))
+			defaults |= Notification.DEFAULT_LIGHTS;
+		this.builder.setDefaults(defaults);
 	}
 	
 	public void notify(String name, String message) {
 		if(this.prefs.getBoolean("noti_mentioned", true)) {
+			this.applySettings();
 			this.builder.setContentTitle(name + " " + this.ctx.getString(R.string.noti_mentioned));
 			this.builder.setContentText(message);
 			Notification n = this.builder.getNotification();

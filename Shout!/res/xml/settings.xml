@@ -1,25 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="Developer options">
-        <SwitchPreference
-                android:key="debug"
-                android:defaultValue="false"
-                android:title="Debug mode"
-                android:summary="Debug mode" />
-
-    </PreferenceCategory>
     
     <PreferenceCategory android:title="Notifications">
         <SwitchPreference 
             android:key="noti_connected"
             android:defaultValue="true"
-            android:title="Connected notification"
-            android:summary="Show notification when connected to the server. You can not remove this notification." />
+            android:title="@string/pref_noti_connected_title"
+            android:summary="@string/pref_noti_connected_summary" />
         <SwitchPreference
             android:key="noti_mentioned"
             android:defaultValue="true"
-            android:title="Mentioned notification"
-            android:summary="Show notification when someone mentions your name" />
+            android:title="@string/pref_noti_mentioned_title"
+            android:summary="@string/pref_noti_mentioned_summary" />
+        <SwitchPreference
+            android:key="noti_sound"
+            android:defaultValue="true"
+            android:title="@string/pref_noti_sound_title"
+            android:summary="@string/pref_noti_sound_summary" />
+        <SwitchPreference
+            android:key="noti_vibrate"
+            android:defaultValue="true"
+            android:title="@string/pref_noti_vibrate_title"
+            android:summary="@string/pref_noti_vibrate_summary" />
+        <SwitchPreference
+            android:key="noti_light"
+            android:defaultValue="true"
+            android:title="@string/pref_noti_light_title"
+            android:summary="@string/pref_noti_light_summary" />
+    </PreferenceCategory>
+    
+    <PreferenceCategory android:title="Developer options">
+        <SwitchPreference
+                android:key="verbose"
+                android:defaultValue="false"
+                android:title="@string/pref_dev_verbose_title"
+                android:summary="@string/pref_dev_verbose_summary" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

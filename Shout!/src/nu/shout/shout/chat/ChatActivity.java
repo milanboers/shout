@@ -25,9 +25,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -63,8 +61,6 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 	
 	private BuildingFetcher bf;
 	
-	private SharedPreferences prefs;
-	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,8 +68,6 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
         setContentView(R.layout.activity_chat);
         
         this.bf = new BuildingFetcher();
-        
-        this.prefs = PreferenceManager.getDefaultSharedPreferences(this);
         
         this.irc = new IRCConnection(getIntent().getExtras().getString("nickname"));
         IRCListenerAdapter adapter = new IRCListenerAdapter(this);
@@ -221,9 +215,7 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 
 	@Override
 	public void onLocationChanged(final Location loc) {
-		Log.v(TAG, "DEBUG: New location lat " + loc.getLatitude() + " lon " + loc.getLongitude());
-		if(this.prefs.getBoolean("debug", false))
-			this.chatBox.addNotice("DEBUG: New location lat " + loc.getLatitude() + " lon " + loc.getLongitude());
+		this.chatBox.addVerboseNotice("New location lat " + loc.getLatitude() + " lon " + loc.getLongitude());
 		
 		new AsyncTask<Void, Void, List<Building>>() {
 			@Override

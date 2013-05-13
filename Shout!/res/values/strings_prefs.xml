@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pref_noti_connected_title">Connected notification</string>
+    <string name="pref_noti_connected_summary">Show notification when connected to the server</string>
+    
+    <string name="pref_noti_mentioned_title">Mentioned notification</string>
+    <string name="pref_noti_mentioned_summary">Show notification when someone mentions your name</string>
+    
+    <string name="pref_noti_sound_title">Sound</string>
+    <string name="pref_noti_sound_summary">Play a sound when someone mentions your name</string>
+    
+    <string name="pref_noti_vibrate_title">Vibration</string>
+    <string name="pref_noti_vibrate_summary">Vibrate when someone mentions your name</string>
+    
+    <string name="pref_noti_light_title">Light</string>
+    <string name="pref_noti_light_summary">Show notification light when someone mentions your name</string>
+    
+    <string name="pref_dev_verbose_title">Verbose mode</string>
+    <string name="pref_dev_verbose_summary">Shows extra information</string>
+</resources>

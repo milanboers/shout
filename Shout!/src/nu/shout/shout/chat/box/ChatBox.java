@@ -8,15 +8,21 @@ import nu.shout.shout.chat.box.items.ChatBoxItem;
 import nu.shout.shout.chat.box.items.ChatBoxNotice;
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 
 public class ChatBox extends ListView {
 	private List<ChatBoxItem> chatBoxItems = new ArrayList<ChatBoxItem>();
+	
+	private SharedPreferences prefs;
 
 	public ChatBox(Context context, AttributeSet attrs) {
 		super(context, attrs);
+        
+        this.prefs = PreferenceManager.getDefaultSharedPreferences(this.getContext());
 		
 		this.setAdapter(new ChatBoxAdapter(context, this.chatBoxItems));
 		this.setStackFromBottom(true);
@@ -35,6 +41,11 @@ public class ChatBox extends ListView {
 				((BaseAdapter) ChatBox.this.getAdapter()).notifyDataSetChanged();
 			}
 		});
+	}
+	
+	public void addVerboseNotice(final String text) {
+		if(this.prefs.getBoolean("verbose", false))
+			this.addNotice("VERBOSE: " + text);
 	}
     
 	public void addChat(final String name, final String text) {

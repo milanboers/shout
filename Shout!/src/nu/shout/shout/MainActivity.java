@@ -36,6 +36,8 @@ public class MainActivity extends SherlockActivity {
 				Log.v(TAG, MainActivity.this.nicknameView.getText().toString());
 				intent.putExtra("nickname", MainActivity.this.nicknameView.getText().toString());
 				startActivity(intent);
+				// Stop the activity so people can't go back
+				MainActivity.this.finish();
 			}
 		});
 	}
