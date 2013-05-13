@@ -1053,16 +1053,17 @@ containing a value of this type.
         public static final int abs__shareactionprovider_share_with_application=0x7f0a0007;
         public static final int app_name=0x7f0a000d;
         public static final int chatLineHint=0x7f0a000f;
-        public static final int chat_me=0x7f0a0023;
-        public static final int enter_chat=0x7f0a0022;
-        public static final int error_nobuildings=0x7f0a0020;
-        public static final int hello_world=0x7f0a001f;
+        public static final int chat_me=0x7f0a0024;
+        public static final int enter_chat=0x7f0a0023;
+        public static final int error_nobuildings=0x7f0a0021;
+        public static final int hello_world=0x7f0a0020;
         public static final int menu_connect=0x7f0a0011;
         public static final int menu_disconnect=0x7f0a0012;
         public static final int menu_settings=0x7f0a0010;
-        public static final int nickname=0x7f0a0021;
+        public static final int nickname=0x7f0a0022;
         public static final int noti_connected=0x7f0a001a;
         public static final int noti_in_channel=0x7f0a001b;
+        public static final int noti_mentioned=0x7f0a001d;
         public static final int noti_not_in_channel=0x7f0a001c;
         public static final int notice_already_connected=0x7f0a0017;
         public static final int notice_connected=0x7f0a0014;
@@ -1072,8 +1073,8 @@ containing a value of this type.
         public static final int notice_joined_channel=0x7f0a0019;
         public static final int notice_not_connected=0x7f0a0018;
         public static final int send=0x7f0a000e;
-        public static final int title_activity_chat=0x7f0a001d;
-        public static final int title_activity_settings=0x7f0a001e;
+        public static final int title_activity_chat=0x7f0a001e;
+        public static final int title_activity_settings=0x7f0a001f;
     }
     public static final class style {
         /** 

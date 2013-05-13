@@ -3,10 +3,23 @@
     <PreferenceCategory android:title="Developer options">
         <SwitchPreference
                 android:key="debug"
-                android:defaultValue="true"
+                android:defaultValue="false"
                 android:title="Debug mode"
                 android:summary="Debug mode" />
 
+    </PreferenceCategory>
+    
+    <PreferenceCategory android:title="Notifications">
+        <SwitchPreference 
+            android:key="noti_connected"
+            android:defaultValue="true"
+            android:title="Connected notification"
+            android:summary="Show notification when connected to the server. You can not remove this notification." />
+        <SwitchPreference
+            android:key="noti_mentioned"
+            android:defaultValue="true"
+            android:title="Mentioned notification"
+            android:summary="Show notification when someone mentions your name" />
     </PreferenceCategory>
 
 </PreferenceScreen>
