@@ -26,7 +26,6 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.content.Intent;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -112,6 +111,59 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
         });
     }
     
+    /**
+     * Sends the current line in the chatBox
+     */
+    private void send() {
+    	this.irc.sendMessage(this.chatLine.getText().toString());
+    	this.chatBox.addChat(getString(R.string.chat_me), this.chatLine.getText().toString());
+		this.chatLine.setText("");
+    }
+    
+    private void connect() {
+    	if(this.irc.isConnected()) {
+    		this.chatBox.addNotice(getString(R.string.notice_already_connected));
+    		return;
+    	}
+    	
+    	setProgressBarIndeterminateVisibility(true);
+		this.chatBox.addNotice(getString(R.string.notice_connecting));
+		this.irc.connect();
+    }
+    
+    private void disconnect() {
+    	if(!this.irc.isConnected()) {
+    		this.chatBox.addNotice(getString(R.string.notice_not_connected));
+    		return;
+    	}
+    	
+    	setProgressBarIndeterminateVisibility(true);
+		this.chatBox.addNotice(getString(R.string.notice_disconnecting));
+		this.irc.disconnect();
+    }
+    
+    /**
+     * Join a channel (and leave all others)
+     * Shows notifications
+     * @param channel channel on the IRC server
+     * @param name name of the channel
+     */
+    private void join(String channel, String name) {
+    	this.connectNoti.setChannel(name);
+    	this.irc.joinChannel(channel);
+    	setTitle(name);
+		this.chatBox.addNotice(getString(R.string.notice_joined_channel) + " " + name);
+    }
+    
+    /**
+     * Leave all channels
+     */
+    private void leave() {
+    	this.irc.partAllChannels();
+		this.chatBox.addNotice(getString(R.string.error_nobuildings));
+    	this.setTitle(R.string.title_activity_chat);
+    }
+    
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -136,50 +188,14 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
     			return super.onOptionsItemSelected(item);
     	}
     }
-
-    /**
-     * Fired when send button is hit. Sends the current line in the chatLine.
-     */
-    private void send() {
-    	this.irc.sendMessage(this.chatLine.getText().toString());
-    	this.chatBox.addChat(getString(R.string.chat_me), this.chatLine.getText().toString());
-		this.chatLine.setText("");
-    }
     
-    public void connect() {
-    	if(this.irc.isConnected()) {
-    		this.chatBox.addNotice(getString(R.string.notice_already_connected));
-    		return;
-    	}
-    	
-    	setProgressBarIndeterminateVisibility(true);
-		this.chatBox.addNotice(getString(R.string.notice_connecting));
-		this.irc.connect();
-    }
-    
-    public void disconnect() {
-    	if(!this.irc.isConnected()) {
-    		this.chatBox.addNotice(getString(R.string.notice_not_connected));
-    		return;
-    	}
-    	
-    	setProgressBarIndeterminateVisibility(true);
-		this.chatBox.addNotice(getString(R.string.notice_disconnecting));
-		this.irc.disconnect();
-    }
-    
-    public void join(String channel) {
-    	this.connectNoti.setChannel(channel);
-    	this.irc.joinChannel(channel);
-    }
-
     // IN THREAD
 	@Override
 	public void onMessage(final MessageEvent<IRCConnection> event) {
+		this.chatBox.addChat(event.getUser().getNick(), event.getMessage());
 		if(event.getMessage().contains(this.irc.getNick())) {
 			this.mentionNoti.notify(event.getUser().getNick(), event.getMessage());
 		}
-		this.chatBox.addChat(event.getUser().getNick(), event.getMessage());
 	}
 
 	// IN THREAD
@@ -223,22 +239,18 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 				try {
 					return ChatActivity.this.bf.getBuildings(loc);
 				} catch (IOException e) {
-					// TODO: afvangen
-					Log.v(TAG, "IOException");
+					return null;
 				}
-				return null;
 			}
 			
 			@Override
 			protected void onPostExecute(List<Building> buildings) {
 				if(buildings == null) {
+					ChatActivity.this.chatBox.addNotice(getString(R.string.error_ioexception));
 				} else if(buildings.size() == 0) {
-					// TODO: misschien niet elke keer weergeven maar 1 keer?
-					ChatActivity.this.irc.partAllChannels();
-					ChatActivity.this.chatBox.addNotice(getString(R.string.error_nobuildings));
+					ChatActivity.this.leave();
 				} else if(!buildings.get(0).ircroom.equals(ChatActivity.this.irc.getChannel())) {
-					ChatActivity.this.join(buildings.get(0).ircroom);
-					ChatActivity.this.chatBox.addNotice(getString(R.string.notice_joined_channel) + " " + buildings.get(0).ircroom);
+					ChatActivity.this.join(buildings.get(0).ircroom, buildings.get(0).name);
 				}
 			}
 		}.execute();

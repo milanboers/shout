@@ -26,6 +26,7 @@ public class ChatBox extends ListView {
 		
 		this.setAdapter(new ChatBoxAdapter(context, this.chatBoxItems));
 		this.setStackFromBottom(true);
+		this.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
 	}
 	
 	/**
