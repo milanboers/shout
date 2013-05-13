@@ -13,11 +13,16 @@
     <string name="notice_disconnected">Disconnected</string>
     <string name="notice_already_connected">You are already connected. Idiot.</string>
     <string name="notice_not_connected">You are not connected. Idiot.</string>
+    <string name="notice_joined_channel">Joined channel</string>
+    <string name="noti_connected">is connected</string>
+    <string name="noti_in_channel">In channel</string>
+    <string name="noti_not_in_channel">Not in any channel</string>
     <string name="title_activity_chat">ChatActivity</string>
-    <string name="action_settings">Settings</string>
+    <string name="title_activity_settings">SettingsActivity</string>
     <string name="hello_world">Hello world!</string>
     <string name="error_nobuildings">No buildings were found near you…</string>
     <string name="nickname">Nickname</string>
     <string name="enter_chat">Enter chat</string>
+    <string name="chat_me">me</string>
 
 </resources>

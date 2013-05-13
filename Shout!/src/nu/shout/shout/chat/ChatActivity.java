@@ -19,12 +19,16 @@ import nu.shout.shout.irc.IRCListener;
 import nu.shout.shout.irc.IRCListenerAdapter;
 import nu.shout.shout.location.Building;
 import nu.shout.shout.location.BuildingFetcher;
+import nu.shout.shout.settings.SettingsActivity;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.content.Context;
+import android.preference.PreferenceManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -36,6 +40,10 @@ import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
 public class ChatActivity extends SherlockActivity implements IRCListener, LocationListener {
+	private enum Noti {
+		CONNECTED
+	}
+	
 	@SuppressWarnings("unused")
 	private static final String TAG = "ChatActivity";
 	
@@ -51,6 +59,9 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 	private ChatBox chatBox;
 	
 	private LocationManager lm;
+	private NotificationManager nm;
+	
+	private ChatConnectNotification connectNoti;
 	
 	private BuildingFetcher bf;
 	
@@ -64,7 +75,7 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
         
         this.bf = new BuildingFetcher();
         
-        this.prefs = getSharedPreferences("nu.shout.shout", Context.MODE_PRIVATE);
+        this.prefs = PreferenceManager.getDefaultSharedPreferences(this);
         
         this.irc = new IRCConnection(getIntent().getExtras().getString("nickname"));
         IRCListenerAdapter adapter = new IRCListenerAdapter(this);
@@ -79,6 +90,9 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
         this.lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, TIME_BETWEEN_LOC, DIST_BETWEEN_LOC, this);
         // Pick last known location
         this.onLocationChanged(this.lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
+        this.nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        
+        this.connectNoti = new ChatConnectNotification(this);
         
         setupUI();
         
@@ -116,6 +130,10 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
+	    	case R.id.menu_settings:
+	    		Intent i = new Intent(this, SettingsActivity.class);
+	    		startActivity(i);
+	    		return true;
     		case R.id.menu_connect:
     			connect();
     			return true;
@@ -132,7 +150,7 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
      */
     private void send() {
     	this.irc.sendMessage(this.chatLine.getText().toString());
-    	this.chatBox.addChat("me", this.chatLine.getText().toString());
+    	this.chatBox.addChat(getString(R.string.chat_me), this.chatLine.getText().toString());
 		this.chatLine.setText("");
     }
     
@@ -141,6 +159,7 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
     		this.chatBox.addNotice(getString(R.string.notice_already_connected));
     		return;
     	}
+    	
     	setProgressBarIndeterminateVisibility(true);
 		this.chatBox.addNotice(getString(R.string.notice_connecting));
 		this.irc.connect();
@@ -151,9 +170,18 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
     		this.chatBox.addNotice(getString(R.string.notice_not_connected));
     		return;
     	}
+    	
     	setProgressBarIndeterminateVisibility(true);
 		this.chatBox.addNotice(getString(R.string.notice_disconnecting));
 		this.irc.disconnect();
+    }
+    
+    public void join(String channel) {
+    	Notification n = this.connectNoti.changeText(getString(R.string.noti_in_channel) + " " + channel);
+    	if(this.irc.isConnected())
+    		ChatActivity.this.nm.notify(Noti.CONNECTED.ordinal(), n);
+    	
+    	this.irc.joinChannel(channel);
     }
 
     // IN THREAD
@@ -165,25 +193,33 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 	// IN THREAD
 	@Override
 	public void onConnect(ConnectEvent<IRCConnection> event) {
+		// Update UI
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				setProgressBarIndeterminateVisibility(false);
+		    	//
+				Notification n = ChatActivity.this.connectNoti.changeTitle(getString(R.string.app_name) + " " + getString(R.string.noti_connected));
+				ChatActivity.this.nm.notify(Noti.CONNECTED.ordinal(), n);
 			}
 		});
-		this.chatBox.addNotice("Connected!");
+    	
+		this.chatBox.addNotice(getString(R.string.notice_connected));
 	}
 
 	// IN THREAD
 	@Override
 	public void onDisconnect(DisconnectEvent<IRCConnection> event) {
+		// Update UI
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				setProgressBarIndeterminateVisibility(false);
+				//
+		    	ChatActivity.this.nm.cancel(Noti.CONNECTED.ordinal());
 			}
 		});
-		this.chatBox.addNotice("Disconnected!");
+		this.chatBox.addNotice(getString(R.string.notice_disconnected));
 	}
 
 	@Override
@@ -212,8 +248,8 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 					ChatActivity.this.irc.partAllChannels();
 					ChatActivity.this.chatBox.addNotice(getString(R.string.error_nobuildings));
 				} else if(!buildings.get(0).ircroom.equals(ChatActivity.this.irc.getChannel())) {
-					ChatActivity.this.irc.joinChannel(buildings.get(0).ircroom);
-					ChatActivity.this.chatBox.addNotice("Joined channel " + buildings.get(0).ircroom);
+					ChatActivity.this.join(buildings.get(0).ircroom);
+					ChatActivity.this.chatBox.addNotice(getString(R.string.notice_joined_channel) + " " + buildings.get(0).ircroom);
 				}
 			}
 		}.execute();

@@ -2,13 +2,13 @@ package nu.shout.shout;
 
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
 
 import nu.shout.shout.chat.ChatActivity;
+import nu.shout.shout.settings.SettingsActivity;
 
 import android.os.Bundle;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -19,16 +19,11 @@ public class MainActivity extends SherlockActivity {
 	private static final String TAG = "MainActivity";
 	
 	private EditText nicknameView;
-	
-	private SharedPreferences prefs;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-        
-        this.prefs = getSharedPreferences("nu.shout.shout", Context.MODE_PRIVATE);
-        this.prefs.edit().putBoolean("debug", true).commit();
 		
 		this.nicknameView = (EditText) findViewById(R.id.main_nickname);
 		
@@ -51,5 +46,16 @@ public class MainActivity extends SherlockActivity {
 		getSupportMenuInflater().inflate(R.menu.activity_main, menu);
 		return true;
 	}
+	
+	@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	switch (item.getItemId()) {
+	    	case R.id.menu_settings:
+	    		Intent i = new Intent(this, SettingsActivity.class);
+	    		startActivity(i);
+    		default:
+    			return super.onOptionsItemSelected(item);
+    	}
+    }
 
 }
