@@ -26,6 +26,7 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.content.Intent;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -59,6 +60,9 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 	private ChatMentionNotification mentionNoti;
 	
 	private BuildingFetcher bf;
+	
+	private boolean connecting;
+	private boolean disconnecting;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,9 +130,10 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
     		return;
     	}
     	
-    	setProgressBarIndeterminateVisibility(true);
+    	this.setConnecting(true);
 		this.chatBox.addNotice(getString(R.string.notice_connecting));
 		this.irc.connect();
+		supportInvalidateOptionsMenu();
     }
     
     private void disconnect() {
@@ -137,21 +142,23 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
     		return;
     	}
     	
-    	setProgressBarIndeterminateVisibility(true);
+    	this.setDisconnecting(true);
 		this.chatBox.addNotice(getString(R.string.notice_disconnecting));
 		this.irc.disconnect();
+		supportInvalidateOptionsMenu();
     }
     
     /**
      * Join a channel (and leave all others)
      * Shows notifications
      * @param channel channel on the IRC server
+     * @param shortcut name of the channel category (like university)
      * @param name name of the channel
      */
-    private void join(String channel, String name) {
+    private void join(String channel, String shortcut, String name) {
     	this.connectNoti.setChannel(name);
     	this.irc.joinChannel(channel);
-    	setTitle(name);
+    	setTitle(shortcut + " - " + name);
 		this.chatBox.addNotice(getString(R.string.notice_joined_channel) + " " + name);
     }
     
@@ -161,13 +168,24 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
     private void leave() {
     	this.irc.partAllChannels();
 		this.chatBox.addNotice(getString(R.string.error_nobuildings));
-    	this.setTitle(R.string.title_activity_chat);
+    	setTitle(R.string.title_activity_chat);
     }
     
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getSupportMenuInflater().inflate(R.menu.activity_chat, menu);
+        Log.v(TAG, "Creating options menu");
+        MenuItem toggleConnect = menu.findItem(R.id.menu_connect_toggle);
+        if(this.disconnecting) {
+        	toggleConnect.setVisible(false);
+        	toggleConnect.setEnabled(false);
+        } else if(this.connecting)
+        	toggleConnect.setTitle(R.string.menu_cancel);
+        else if(irc.isConnected())
+        	toggleConnect.setTitle(R.string.menu_disconnect);
+        else
+        	toggleConnect.setTitle(R.string.menu_connect);
         return true;
     }
     
@@ -178,11 +196,11 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 	    		Intent i = new Intent(this, SettingsActivity.class);
 	    		startActivity(i);
 	    		return true;
-    		case R.id.menu_connect:
-    			connect();
-    			return true;
-    		case R.id.menu_disconnect:
-    			disconnect();
+    		case R.id.menu_connect_toggle:
+    			if(this.connecting || this.irc.isConnected())
+    				disconnect();
+    			else
+    				connect();
     			return true;
     		default:
     			return super.onOptionsItemSelected(item);
@@ -205,9 +223,10 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				setProgressBarIndeterminateVisibility(false);
+				ChatActivity.this.setConnecting(false);
 		    	//
 				ChatActivity.this.connectNoti.setConncted();
+				supportInvalidateOptionsMenu();
 			}
 		});
     	
@@ -221,11 +240,13 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				setProgressBarIndeterminateVisibility(false);
+				ChatActivity.this.setDisconnecting(false);
 				//
 		    	ChatActivity.this.connectNoti.cancel();
+				supportInvalidateOptionsMenu();
 			}
 		});
+		
 		this.chatBox.addNotice(getString(R.string.notice_disconnected));
 	}
 
@@ -250,7 +271,7 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 				} else if(buildings.size() == 0) {
 					ChatActivity.this.leave();
 				} else if(!buildings.get(0).ircroom.equals(ChatActivity.this.irc.getChannel())) {
-					ChatActivity.this.join(buildings.get(0).ircroom, buildings.get(0).name);
+					ChatActivity.this.join(buildings.get(0).ircroom, buildings.get(0).shortcut, buildings.get(0).name);
 				}
 			}
 		}.execute();
@@ -267,4 +288,14 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 	@Override
 	public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
 	}
+	
+    private void setConnecting(boolean connecting) {
+    	setProgressBarIndeterminateVisibility(connecting);
+    	this.connecting = connecting;
+    }
+    
+    private void setDisconnecting(boolean disconnecting) {
+    	setProgressBarIndeterminateVisibility(disconnecting);
+    	this.disconnecting = disconnecting;
+    }
 }

@@ -20,6 +20,7 @@ public class IRCConnection extends PircBotX {
 		super();
 		
 		this.setName(nickname);
+		this.setAutoReconnect(true);
 	}
 	
 	public void sendMessage(String message) {

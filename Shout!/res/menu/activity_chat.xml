@@ -2,16 +2,11 @@
 
     <item
         android:id="@+id/menu_settings"
-        android:orderInCategory="100"
-        android:showAsAction="never"
-        android:title="@string/menu_settings"/>
+        android:title="@string/menu_settings" />
     
     <item
-        android:id="@+id/menu_connect"
-        android:title="@string/menu_connect"/>
-    
-    <item
-        android:id="@+id/menu_disconnect"
-        android:title="@string/menu_disconnect"/>
+        android:id="@+id/menu_connect_toggle"
+        android:title="@string/menu_connect"
+        android:showAsAction="ifRoom" />
 
 </menu>
