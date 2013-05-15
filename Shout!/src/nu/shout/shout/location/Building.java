@@ -14,4 +14,17 @@ public class Building {
 	
 	@SerializedName("distance")
 	public String distance;
+	
+	@Override
+	public boolean equals(Object o) {
+		if(o == null)
+			return false;
+		if(o instanceof Building) {
+			Building other = (Building) o;
+			
+			if(this.ircroom.equalsIgnoreCase(other.ircroom))
+				return true;
+		}
+		return false;
+	}
 }

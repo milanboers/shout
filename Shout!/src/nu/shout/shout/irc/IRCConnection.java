@@ -68,7 +68,12 @@ public class IRCConnection extends PircBotX {
 		this.channel = channel;
 	}
 	
-	public String getChannel() {
-		return this.channel;
+	public Channel getChannel() {
+		for(Channel c : this.getChannels())
+		{
+			if(c.getName().equalsIgnoreCase(this.channel))
+				return c;
+		}
+		return null;
 	}
 }

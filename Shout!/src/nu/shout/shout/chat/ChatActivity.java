@@ -1,13 +1,16 @@
 package nu.shout.shout.chat;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
+import org.pircbotx.User;
 import org.pircbotx.hooks.events.ConnectEvent;
 import org.pircbotx.hooks.events.DisconnectEvent;
 import org.pircbotx.hooks.events.MessageEvent;
 
-import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
@@ -35,7 +38,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
-public class ChatActivity extends SherlockActivity implements IRCListener, LocationListener {
+public class ChatActivity extends SherlockFragmentActivity implements IRCListener, LocationListener {
 	private enum Noti {
 		CONNECTED, MENTIONED
 	}
@@ -63,6 +66,8 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 	
 	private boolean connecting;
 	private boolean disconnecting;
+	
+	private Building currentBuilding;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -149,23 +154,45 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
     }
     
     /**
+     * Get list of users in the channel
+     */
+    private void showUsers() {
+    	// Null = not in channel
+    	if(this.currentBuilding == null || this.irc.getChannel() == null) {
+    		this.chatBox.addNotice(getString(R.string.error_notinchannel));
+    		return;
+    	}
+    	
+    	Set<User> users = this.irc.getChannel().getUsers();
+    	List<String> usernames = new ArrayList<String>(users.size());
+    	for(User user : users)
+    		usernames.add(user.getNick());
+    	ChatUsersDialog f = new ChatUsersDialog();
+    	f.setUsernames(usernames.toArray(new String[usernames.size()]));
+    	f.setChannelName(this.currentBuilding.name);
+    	f.show(getSupportFragmentManager(), "users");
+    }
+    
+    /**
      * Join a channel (and leave all others)
      * Shows notifications
      * @param channel channel on the IRC server
      * @param shortcut name of the channel category (like university)
      * @param name name of the channel
      */
-    private void join(String channel, String shortcut, String name) {
-    	this.connectNoti.setChannel(name);
-    	this.irc.joinChannel(channel);
-    	setTitle(shortcut + " - " + name);
-		this.chatBox.addNotice(getString(R.string.notice_joined_channel) + " " + name);
+    private void join(Building building) {
+    	this.currentBuilding = building;
+    	this.connectNoti.setChannel(building.name);
+    	this.irc.joinChannel(building.ircroom);
+    	setTitle(building.shortcut + " - " + building.name);
+		this.chatBox.addNotice(getString(R.string.notice_joined_channel) + " " + building.name);
     }
     
     /**
      * Leave all channels
      */
     private void leave() {
+    	this.currentBuilding = null;
     	this.irc.partAllChannels();
 		this.chatBox.addNotice(getString(R.string.error_nobuildings));
     	setTitle(R.string.title_activity_chat);
@@ -202,6 +229,8 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
     			else
     				connect();
     			return true;
+    		case R.id.menu_users:
+    			showUsers();
     		default:
     			return super.onOptionsItemSelected(item);
     	}
@@ -270,8 +299,8 @@ public class ChatActivity extends SherlockActivity implements IRCListener, Locat
 					ChatActivity.this.chatBox.addNotice(getString(R.string.error_ioexception));
 				} else if(buildings.size() == 0) {
 					ChatActivity.this.leave();
-				} else if(!buildings.get(0).ircroom.equals(ChatActivity.this.irc.getChannel())) {
-					ChatActivity.this.join(buildings.get(0).ircroom, buildings.get(0).shortcut, buildings.get(0).name);
+				} else if(!buildings.get(0).equals(ChatActivity.this.currentBuilding)) {
+					ChatActivity.this.join(buildings.get(0));
 				}
 			}
 		}.execute();

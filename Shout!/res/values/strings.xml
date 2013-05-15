@@ -9,5 +9,7 @@
     <string name="nickname">Nickname</string>
     <string name="enter_chat">Enter chat</string>
     <string name="chat_me">me</string>
+    <string name="users_in">Users in</string>
+    <string name="ok">OK</string>
 
 </resources>
