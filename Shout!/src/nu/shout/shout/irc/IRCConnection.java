@@ -14,7 +14,7 @@ public class IRCConnection extends PircBotX {
 	private static final String TAG = "IRCConnection";
 	
 	// The current channel (Shout will only connect to one channel)
-	private String channel;
+	private String channelName;
 
 	public IRCConnection(String nickname) {
 		super();
@@ -25,7 +25,7 @@ public class IRCConnection extends PircBotX {
 	
 	public void sendMessage(String message) {
 		// TODO: wat als channel == null?
-		this.sendMessage(channel, message);
+		this.sendMessage(channelName, message);
 	}
 	
 	public void connect() {
@@ -55,8 +55,8 @@ public class IRCConnection extends PircBotX {
 			
 			@Override
 			protected void onPostExecute(Void v) {
-				if(IRCConnection.this.channel != null)
-					IRCConnection.this.joinChannel(IRCConnection.this.channel);
+				if(IRCConnection.this.channelName != null)
+					IRCConnection.this.joinChannel(IRCConnection.this.channelName);
 			}
 		}.execute();
 	}
@@ -64,19 +64,19 @@ public class IRCConnection extends PircBotX {
 	public void partAllChannels() {
 		for(Channel c : this.getChannels())
 			this.partChannel(c);
-		this.channel = null;
+		this.channelName = null;
 	}
 
-	public void joinChannel(String channel) {
+	public void joinChannel(String channelName) {
 		this.partAllChannels();
-		super.joinChannel(channel);
-		this.channel = channel;
+		super.joinChannel(channelName);
+		this.channelName = channelName;
 	}
 	
 	public Channel getChannel() {
 		for(Channel c : this.getChannels())
 		{
-			if(c.getName().equalsIgnoreCase(this.channel))
+			if(c.getName().equalsIgnoreCase(this.channelName))
 				return c;
 		}
 		return null;

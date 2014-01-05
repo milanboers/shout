@@ -10,7 +10,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 
-public class ChatMentionNotification {
+public class ChatMentionNotifier {
 	private int id;
 	
 	private Context ctx;
@@ -20,7 +20,7 @@ public class ChatMentionNotification {
 	
 	private NotificationCompat.Builder builder;
 	
-	public ChatMentionNotification(Context ctx, int id) {
+	public ChatMentionNotifier(Context ctx, int id) {
 		this.ctx = ctx;
 		this.id = id;
 		

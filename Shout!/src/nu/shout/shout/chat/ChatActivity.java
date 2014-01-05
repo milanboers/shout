@@ -16,6 +16,7 @@ import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
 
 import nu.shout.shout.R;
+import nu.shout.shout.chat.ChatService.LocalBinder;
 import nu.shout.shout.chat.box.ChatBox;
 import nu.shout.shout.irc.IRCConnection;
 import nu.shout.shout.irc.IRCListener;
@@ -28,7 +29,10 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -39,10 +43,6 @@ import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
 public class ChatActivity extends SherlockFragmentActivity implements IRCListener, LocationListener {
-	private enum Noti {
-		CONNECTED, MENTIONED
-	}
-	
 	@SuppressWarnings("unused")
 	private static final String TAG = "ChatActivity";
 	
@@ -51,16 +51,11 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
 	// Min. distance between location updates (in meters)
 	private static final int DIST_BETWEEN_LOC = 1;
 	
-	private IRCConnection irc;
-	
 	private EditText chatLine;
 	private Button sendButton;
 	private ChatBox chatBox;
 	
 	private LocationManager lm;
-	
-	private ChatConnectNotification connectNoti;
-	private ChatMentionNotification mentionNoti;
 	
 	private BuildingFetcher bf;
 	
@@ -69,6 +64,8 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
 	
 	private Building currentBuilding;
 	
+	private ChatService chatService;
+	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,10 +73,6 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
         setContentView(R.layout.activity_chat);
         
         this.bf = new BuildingFetcher();
-        
-        this.irc = new IRCConnection(getIntent().getExtras().getString("nickname"));
-        IRCListenerAdapter adapter = new IRCListenerAdapter(this);
-        this.irc.getListenerManager().addListener(adapter);
         
         this.chatLine = (EditText) findViewById(R.id.chatLine);
         this.sendButton = (Button) findViewById(R.id.sendButton);
@@ -91,12 +84,32 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
         // Pick last known location
         this.onLocationChanged(this.lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
         
-        this.connectNoti = new ChatConnectNotification(this, Noti.CONNECTED.ordinal());
-        this.mentionNoti = new ChatMentionNotification(this, Noti.MENTIONED.ordinal());
         
         setupUI();
         
-        connect();
+        /* Testje */
+        Log.v(TAG, "In chatactivity");
+        Intent serviceIntent = new Intent(this, ChatService.class);
+        //startService(serviceIntent);
+        ServiceConnection sc = new ServiceConnection() {
+			@Override
+			public void onServiceConnected(ComponentName name, IBinder service) {
+				Log.v(TAG, "Service connected");
+				ChatService.LocalBinder binder = (LocalBinder) service;
+				ChatActivity.this.chatService = binder.getService();
+				// Add listener
+				IRCListenerAdapter adapter = new IRCListenerAdapter(ChatActivity.this);
+				ChatActivity.this.chatService.irc.getListenerManager().addListener(adapter);
+				// Connect
+				ChatActivity.this.connect();
+			}
+
+			@Override
+			public void onServiceDisconnected(ComponentName name) {
+				Log.v(TAG, "Service disconnected");
+			}
+        };
+        bindService(serviceIntent, sc, BIND_AUTO_CREATE);
     }
     
     private void setupUI() {
@@ -124,32 +137,32 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
      * Sends the current line in the chatBox
      */
     private void send() {
-    	this.irc.sendMessage(this.chatLine.getText().toString());
-    	this.chatBox.addChat(getString(R.string.chat_me), this.chatLine.getText().toString());
+		this.chatService.irc.sendMessage(this.chatLine.getText().toString());
+	    this.chatBox.addChat(getString(R.string.chat_me), this.chatLine.getText().toString());
 		this.chatLine.setText("");
     }
     
     private void connect() {
-    	if(this.irc.isConnected()) {
+    	if(this.chatService.irc.isConnected()) {
     		this.chatBox.addNotice(getString(R.string.notice_already_connected));
     		return;
     	}
     	
     	this.setConnecting(true);
 		this.chatBox.addNotice(getString(R.string.notice_connecting));
-		this.irc.connect();
+		this.chatService.irc.connect();
 		supportInvalidateOptionsMenu();
     }
     
     private void disconnect() {
-    	if(!this.irc.isConnected()) {
+    	if(!this.chatService.irc.isConnected()) {
     		this.chatBox.addNotice(getString(R.string.notice_not_connected));
     		return;
     	}
     	
     	this.setDisconnecting(true);
 		this.chatBox.addNotice(getString(R.string.notice_disconnecting));
-		this.irc.disconnect();
+		this.chatService.irc.disconnect();
 		supportInvalidateOptionsMenu();
     }
     
@@ -158,15 +171,16 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
      */
     private void showUsers() {
     	// Null = not in channel
-    	if(this.currentBuilding == null || this.irc.getChannel() == null) {
+    	if(this.currentBuilding == null || this.chatService.irc.getChannel() == null) {
     		this.chatBox.addNotice(getString(R.string.error_notinchannel));
     		return;
     	}
     	
-    	Set<User> users = this.irc.getChannel().getUsers();
+    	Set<User> users = this.chatService.irc.getChannel().getUsers();
     	List<String> usernames = new ArrayList<String>(users.size());
     	for(User user : users)
     		usernames.add(user.getNick());
+    	
     	ChatUsersDialog f = new ChatUsersDialog();
     	f.setUsernames(usernames.toArray(new String[usernames.size()]));
     	f.setChannelName(this.currentBuilding.name);
@@ -182,8 +196,8 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
      */
     private void join(Building building) {
     	this.currentBuilding = building;
-    	this.connectNoti.setChannel(building.name);
-    	this.irc.joinChannel(building.ircroom);
+    	//this.connectNoti.setChannel(building.name);
+    	this.chatService.irc.joinChannel(building.ircroom);
     	setTitle(building.shortcut + " - " + building.name);
 		this.chatBox.addNotice(getString(R.string.notice_joined_channel) + " " + building.name);
     }
@@ -193,7 +207,7 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
      */
     private void leave() {
     	this.currentBuilding = null;
-    	this.irc.partAllChannels();
+    	this.chatService.irc.partAllChannels();
 		this.chatBox.addNotice(getString(R.string.error_nobuildings));
     	setTitle(R.string.title_activity_chat);
     }
@@ -204,12 +218,14 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
         getSupportMenuInflater().inflate(R.menu.activity_chat, menu);
         Log.v(TAG, "Creating options menu");
         MenuItem toggleConnect = menu.findItem(R.id.menu_connect_toggle);
+        toggleConnect.setTitle(R.string.menu_connect);
+        
         if(this.disconnecting) {
         	toggleConnect.setVisible(false);
         	toggleConnect.setEnabled(false);
-        } else if(this.connecting)
+        } else if(this.connecting) {
         	toggleConnect.setTitle(R.string.menu_cancel);
-        else if(irc.isConnected())
+        } else if(this.chatService.irc.isConnected())
         	toggleConnect.setTitle(R.string.menu_disconnect);
         else
         	toggleConnect.setTitle(R.string.menu_connect);
@@ -224,13 +240,14 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
 	    		startActivity(i);
 	    		return true;
     		case R.id.menu_connect_toggle:
-    			if(this.connecting || this.irc.isConnected())
-    				disconnect();
-    			else
-    				connect();
-    			return true;
+				if(this.connecting || this.chatService.irc.isConnected())
+	    			disconnect();
+	    		else
+	    			connect();
+				return true;
     		case R.id.menu_users:
-    			showUsers();
+				showUsers();
+				return true;
     		default:
     			return super.onOptionsItemSelected(item);
     	}
@@ -240,9 +257,6 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
 	@Override
 	public void onMessage(final MessageEvent<IRCConnection> event) {
 		this.chatBox.addChat(event.getUser().getNick(), event.getMessage());
-		if(event.getMessage().contains(this.irc.getNick())) {
-			this.mentionNoti.notify(event.getUser().getNick(), event.getMessage());
-		}
 	}
 
 	// IN THREAD
@@ -254,7 +268,7 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
 			public void run() {
 				ChatActivity.this.setConnecting(false);
 		    	//
-				ChatActivity.this.connectNoti.setConncted();
+				//ChatActivity.this.connectNoti.setConncted();
 				supportInvalidateOptionsMenu();
 			}
 		});
@@ -271,14 +285,14 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
 			public void run() {
 				ChatActivity.this.setDisconnecting(false);
 				//
-		    	ChatActivity.this.connectNoti.cancel();
+		    	//ChatActivity.this.connectNoti.cancel();
 				supportInvalidateOptionsMenu();
 			}
 		});
 		
 		this.chatBox.addNotice(getString(R.string.notice_disconnected));
 	}
-
+	
 	@Override
 	public void onLocationChanged(final Location loc) {
 		this.chatBox.addVerboseNotice("New location lat " + loc.getLatitude() + " lon " + loc.getLongitude());
@@ -305,7 +319,7 @@ public class ChatActivity extends SherlockFragmentActivity implements IRCListene
 			}
 		}.execute();
 	}
-
+	
 	@Override
 	public void onProviderDisabled(String arg0) {
 	}

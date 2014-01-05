@@ -38,6 +38,11 @@
             android:label="@string/title_activity_settings"
             android:configChanges="keyboardHidden|orientation|screenSize" >
         </activity>
+        <service
+            android:name="nu.shout.shout.chat.ChatService"
+            android:icon="@drawable/ic_launcher"
+            android:label="@string/title_service_chat" >
+        </service>
     </application>
 
 </manifest>
