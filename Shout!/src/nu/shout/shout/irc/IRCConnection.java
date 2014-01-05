@@ -34,7 +34,9 @@ public class IRCConnection extends PircBotX {
 			protected Void doInBackground(Void... arg0) {
 				try {
 					Log.v(TAG, "Connecting");
-					IRCConnection.this.connect("shout.nu");
+					// TODO: ergens hardcoden
+					// TODO: geeft nullpointerexception als niet kan connecten
+					IRCConnection.this.connect("server.shout.nu");
 				} catch (NickAlreadyInUseException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -42,8 +44,11 @@ public class IRCConnection extends PircBotX {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IrcException e) {
+					// You have not registered
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+				} catch (NullPointerException e) {
+					// TODO: kon niet connecten
 				}
 				return null;
 			}
