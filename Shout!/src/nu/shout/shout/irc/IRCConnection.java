@@ -60,13 +60,19 @@ public class IRCConnection extends PircBotX {
 			}
 		}.execute();
 	}
-	
+
+	/**
+	 * Leave all channels
+	 */
 	public void partAllChannels() {
 		for(Channel c : this.getChannels())
 			this.partChannel(c);
 		this.channelName = null;
 	}
 
+	/**
+	 * Join channel and leave all other channels
+	 */
 	public void joinChannel(String channelName) {
 		this.partAllChannels();
 		super.joinChannel(channelName);
