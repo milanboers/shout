@@ -89,8 +89,8 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 				ChatActivity.this.chatService = binder.getService();
 				// Add listener
 				ChatActivity.this.chatService.addListener(ChatActivity.this);
-				// Connect
-				ChatActivity.this.chatService.connect();
+				
+				ChatActivity.this.onJoin(ChatActivity.this.chatService.getCurrentBuilding());
 			}
 			
 			@Override
@@ -235,5 +235,17 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	public void onStartDisconnecting() {
 		this.chatBox.addNotice(getString(R.string.notice_disconnecting));
 		this.setBusy(true);
+	}
+
+	@Override
+	public void onNicknameInUse() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onNotice(String nickname, String notice) {
+		// TODO Auto-generated method stub
+		
 	}
 }

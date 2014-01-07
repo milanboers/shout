@@ -5,6 +5,7 @@ import org.pircbotx.hooks.ListenerAdapter;
 import org.pircbotx.hooks.events.ConnectEvent;
 import org.pircbotx.hooks.events.DisconnectEvent;
 import org.pircbotx.hooks.events.MessageEvent;
+import org.pircbotx.hooks.events.NoticeEvent;
 
 /**
  * Because PircBotX is stupid and decided to made ListenerAdapter an abstract
@@ -24,6 +25,11 @@ public class IRCListenerAdapter extends ListenerAdapter<IRCConnection> {
 	@Override
 	public void onMessage(MessageEvent<IRCConnection> event) {
 		this.listener.onMessage(event);
+	}
+	
+	@Override
+	public void onNotice(NoticeEvent<IRCConnection> event) {
+		this.listener.onNotice(event);
 	}
 	
 	@Override

@@ -6,9 +6,12 @@ import java.util.List;
 import java.util.Set;
 
 import org.pircbotx.User;
+import org.pircbotx.exception.IrcException;
+import org.pircbotx.exception.NickAlreadyInUseException;
 import org.pircbotx.hooks.events.ConnectEvent;
 import org.pircbotx.hooks.events.DisconnectEvent;
 import org.pircbotx.hooks.events.MessageEvent;
+import org.pircbotx.hooks.events.NoticeEvent;
 
 import nu.shout.shout.Notifications;
 import nu.shout.shout.R;
@@ -33,7 +36,7 @@ import android.util.Log;
 
 public class ChatService extends Service implements IRCListener, LocationListener {
 	public class LocalBinder extends Binder {
-		ChatService getService() {
+		public ChatService getService() {
 			return ChatService.this;
 		}
 	}
@@ -66,8 +69,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
         
 		startForeground(Notifications.CONNECTED.ordinal(), getNotification(getString(R.string.noti_not_in_channel)));
         
-        this.irc = new IRCConnection("temporary_name");
-        
+		this.irc = new IRCConnection();
         IRCListenerAdapter adapter = new IRCListenerAdapter(this);
         this.irc.getListenerManager().addListener(adapter);
         
@@ -94,23 +96,76 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	}
 	
 	public void connect() {
-		this.irc.connect();
+		// TODO: haal uit settings de username
+	}
+	
+	public void connect(String nickname) {
+		this.irc.setName(nickname);
 		
-		for(ChatServiceListener l : this.listeners) {
-			l.onStartConnecting();
+		if(!this.irc.isConnected())
+		{
+			new AsyncTask<Void, Void, Exception>() {
+				@Override
+				protected Exception doInBackground(Void... arg0) {
+					try {
+						Log.v(TAG, "Connecting");
+						// TODO: ergens hardcoden
+						// TODO: geeft nullpointerexception als niet kan connecten
+						ChatService.this.irc.connect("server.shout.nu");
+						return null;
+					} catch (NickAlreadyInUseException e) {
+						for(ChatServiceListener l : ChatService.this.listeners)
+							l.onNicknameInUse();
+						return e;
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						return e;
+					} catch (IrcException e) {
+						// You have not registered
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						return e;
+					} catch (NullPointerException e) {
+						// TODO: kon niet connecten
+						return e;
+					}
+				}
+				
+				@Override
+				protected void onPostExecute(Exception e) {
+					
+				}
+			}.execute();
+			
+			for(ChatServiceListener l : this.listeners)
+				l.onStartConnecting();
 		}
 	}
 	
 	public void disconnect() {
-		this.irc.disconnect();
-		
-		for(ChatServiceListener l : this.listeners) {
-			l.onStartDisconnecting();
+		if(this.irc.isConnected())
+		{	this.irc.disconnect();
+			for(ChatServiceListener l : this.listeners)
+				l.onStartDisconnecting();
 		}
 	}
 	
 	public void sendMessage(String message) {
 		this.irc.sendMessage(message);
+	}
+	
+	public void sendMessage(String target, String message) {
+		this.irc.sendMessage(target, message);
+	}
+	
+	public boolean changeNick(String nickname) {
+		this.irc.changeNick(nickname);
+		Log.v(TAG, "nickname now " + this.irc.getNick());
+		Log.v(TAG, "should be " + nickname);
+		if(this.irc.getNick().equals(nickname))
+			return true;
+		return false;
 	}
 	
 	public boolean isConnected() {
@@ -147,6 +202,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 
 	@Override
 	public void onMessage(MessageEvent<IRCConnection> event) {
+		Log.v(TAG, "Message from " + event.getUser().getNick() + " " + event.getMessage());
 		if(event.getMessage().contains(this.irc.getNick())) {
 			this.mentionNoti.notify(event.getUser().getNick(), event.getMessage());
 		}
@@ -244,5 +300,12 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public void onNotice(NoticeEvent<IRCConnection> event) {
+		for(ChatServiceListener l : this.listeners) {
+			l.onNotice(event.getUser().getNick(), event.getNotice());
+		}
 	}
 }

@@ -6,9 +6,11 @@ public interface ChatServiceListener {
 	public void onLeave();
 	public void onJoin(Building building);
 	public void onMessage(String nickname, String message);
+	public void onNotice(String nickname, String notice);
 	public void onError(String message);
 	public void onStartConnecting();
 	public void onStartDisconnecting();
 	public void onConnect();
 	public void onDisconnect();
+	public void onNicknameInUse();
 }
