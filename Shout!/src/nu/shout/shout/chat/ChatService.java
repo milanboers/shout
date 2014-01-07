@@ -24,6 +24,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -31,6 +32,7 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -61,6 +63,8 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	
 	private List<ChatServiceListener> listeners = new ArrayList<ChatServiceListener>();
 	
+	private SharedPreferences settings;
+	
 	@Override
 	public void onCreate() {
 		Log.v(TAG, "Creating ChatService");
@@ -74,6 +78,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
         this.irc.getListenerManager().addListener(adapter);
         
         this.bf = new BuildingFetcher();
+        this.settings = PreferenceManager.getDefaultSharedPreferences(this);
         
         this.lm = (LocationManager) getSystemService(LOCATION_SERVICE);
         this.lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, TIME_BETWEEN_LOC, DIST_BETWEEN_LOC, this);
@@ -96,7 +101,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	}
 	
 	public void connect() {
-		// TODO: haal uit settings de username
+		this.connect(settings.getString("nickname", null));
 	}
 	
 	public void connect(String nickname) {
@@ -214,6 +219,10 @@ public class ChatService extends Service implements IRCListener, LocationListene
 
 	@Override
 	public void onConnect(ConnectEvent<IRCConnection> event) {
+		// Identify
+		if(this.settings.getString("password", null) != null)
+			this.irc.identify(this.settings.getString("password", null));
+		
 		startForeground(Notifications.CONNECTED.ordinal(), getNotification(getString(R.string.app_name) + " " + getString(R.string.noti_connected)));
 		
 		for(ChatServiceListener l : this.listeners) {

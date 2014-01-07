@@ -11,9 +11,12 @@ import nu.shout.shout.settings.SettingsActivity;
 
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -48,6 +51,10 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 		});
 		
 		setupService();
+		
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+		if(settings.getString("nickname", null) != null && settings.getString("password", null) != null)
+			goToChat();
 	}
 	
 	private void setupService() {
@@ -69,6 +76,13 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
         };
         bindService(serviceIntent, this.chatServiceConnection, BIND_AUTO_CREATE);
     }
+	
+	private void goToChat() {
+		Intent intent = new Intent(MainActivity.this, ChatActivity.class);
+		startActivity(intent);
+		// Stop the activity so people can't go back
+		MainActivity.this.finish();
+	}
 	
 	@Override
 	public void onDestroy() {
@@ -96,14 +110,16 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
     }
 
 	@Override
-	public void onNicknameRegistered(String password) {
+	public void onNicknameRegistered(String nickname, String password) {
 		Log.v(TAG, "Nickname registered " + password);
 		
-		Intent intent = new Intent(MainActivity.this, ChatActivity.class);
-		Log.v(TAG, MainActivity.this.nicknameView.getText().toString());
-		startActivity(intent);
-		// Stop the activity so people can't go back
-		MainActivity.this.finish();
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+		Editor ed = settings.edit();
+		ed.putString("nickname", nickname);
+		ed.putString("password", password);
+		ed.commit();
+		
+		goToChat();
 	}
 
 	@Override

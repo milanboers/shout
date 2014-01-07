@@ -111,7 +111,7 @@ public class NicknameRegistrar implements ChatServiceListener {
 			} else if(notice.contains("registered and protected")) {
 			} else if(notice.contains("registered")) {
 				for(NicknameRegistrarListener l : this.listeners) {
-					l.onNicknameRegistered(this.password);
+					l.onNicknameRegistered(this.nickname, this.password);
 				}
 			}
 		}

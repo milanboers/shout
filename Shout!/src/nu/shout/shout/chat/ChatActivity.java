@@ -90,7 +90,10 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 				// Add listener
 				ChatActivity.this.chatService.addListener(ChatActivity.this);
 				
-				ChatActivity.this.onJoin(ChatActivity.this.chatService.getCurrentBuilding());
+				if(!ChatActivity.this.chatService.isConnected())
+					ChatActivity.this.chatService.connect();
+				if(ChatActivity.this.chatService.getCurrentBuilding() != null)
+					ChatActivity.this.onJoin(ChatActivity.this.chatService.getCurrentBuilding());
 			}
 			
 			@Override
