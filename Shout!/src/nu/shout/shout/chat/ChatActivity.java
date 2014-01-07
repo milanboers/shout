@@ -39,6 +39,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	private ChatBox chatBox;
 	
 	private ChatService chatService;
+	private ServiceConnection chatServiceConnection;
 	
 	private boolean busy;
 	
@@ -81,7 +82,9 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     
     private void setupService() {
         Intent serviceIntent = new Intent(this, ChatService.class);
-        ServiceConnection sc = new ServiceConnection() {
+        startService(serviceIntent);
+        
+        this.chatServiceConnection = new ServiceConnection() {
 			@Override
 			public void onServiceConnected(ComponentName name, IBinder service) {
 				Log.v(TAG, "Service connected");
@@ -101,7 +104,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 				Log.v(TAG, "Service disconnected");
 			}
         };
-        bindService(serviceIntent, sc, BIND_AUTO_CREATE);
+        bindService(serviceIntent, this.chatServiceConnection, BIND_AUTO_CREATE);
     }
     
     /**
@@ -133,6 +136,12 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     	f.setUsernames(usernames.toArray(new String[usernames.size()]));
     	f.setChannelName(this.chatService.getCurrentBuilding().name);
     	f.show(getSupportFragmentManager(), "users");
+    }
+    
+    @Override
+    protected void onDestroy() {
+    	unbindService(this.chatServiceConnection);
+		super.onDestroy();
     }
     
     @Override
