@@ -233,6 +233,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	@Override
 	public void onDisconnect(DisconnectEvent<IRCConnection> event) {
 		startForeground(Notifications.CONNECTED.ordinal(), getNotification(getString(R.string.app_name) + " " + getString(R.string.noti_not_in_channel)));
+		this.currentBuilding = null;
 		
 		for(ChatServiceListener l : this.listeners) {
 			l.onDisconnect();

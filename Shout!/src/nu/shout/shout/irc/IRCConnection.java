@@ -8,6 +8,8 @@ import org.pircbotx.PircBotX;
 import org.pircbotx.exception.IrcException;
 import org.pircbotx.exception.NickAlreadyInUseException;
 
+import android.util.Log;
+
 public class IRCConnection extends PircBotX {
 	@SuppressWarnings("unused")
 	private static final String TAG = "IRCConnection";
@@ -52,8 +54,10 @@ public class IRCConnection extends PircBotX {
 	}
 	
 	public Channel getChannel() {
+		Log.v(TAG, "channelName " + this.channelName);
 		for(Channel c : this.getChannels())
 		{
+			Log.v(TAG, c.getName());
 			if(c.getName().equalsIgnoreCase(this.channelName))
 				return c;
 		}

@@ -140,6 +140,13 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
         // Inflate the menu; this adds items to the action bar if it is present.
         getSupportMenuInflater().inflate(R.menu.activity_chat, menu);
         Log.v(TAG, "Creating options menu");
+        
+        if(this.chatService.getCurrentBuilding() == null)
+        {
+        	MenuItem usersSelect = menu.findItem(R.id.menu_users);
+        	usersSelect.setVisible(false);
+        }
+        
         MenuItem toggleConnect = menu.findItem(R.id.menu_connect_toggle);
         toggleConnect.setTitle(R.string.menu_connect);
         
@@ -202,6 +209,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 			}
 		});
 		this.chatBox.addNotice(getString(R.string.notice_disconnected));
+		supportInvalidateOptionsMenu();
 	}
 	
 	private void setBusy(boolean busy) {
