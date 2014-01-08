@@ -3,9 +3,9 @@ package nu.shout.shout.chat.box;
 import java.util.ArrayList;
 import java.util.List;
 
-import nu.shout.shout.chat.box.items.ChatBoxChat;
-import nu.shout.shout.chat.box.items.ChatBoxItem;
-import nu.shout.shout.chat.box.items.ChatBoxNotice;
+import nu.shout.shout.chat.items.Chat;
+import nu.shout.shout.chat.items.Item;
+import nu.shout.shout.chat.items.Notice;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -15,7 +15,7 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 
 public class ChatBox extends ListView {
-	private List<ChatBoxItem> chatBoxItems = new ArrayList<ChatBoxItem>();
+	private List<Item> chatBoxItems = new ArrayList<Item>();
 	
 	private SharedPreferences prefs;
 
@@ -33,12 +33,12 @@ public class ChatBox extends ListView {
 	 * Adds a text to the chatbox
 	 * @param text
 	 */
-	public void addNotice(final String text) {
+	public void addNotice(final Notice notice) {
 		final Activity activity = (Activity) getContext();
 		activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				ChatBox.this.chatBoxItems.add(new ChatBoxNotice(text));
+				ChatBox.this.chatBoxItems.add(notice);
 				((BaseAdapter) ChatBox.this.getAdapter()).notifyDataSetChanged();
 			}
 		});
@@ -46,15 +46,15 @@ public class ChatBox extends ListView {
 	
 	public void addVerboseNotice(final String text) {
 		if(this.prefs.getBoolean("verbose", false))
-			this.addNotice("VERBOSE: " + text);
+			this.addNotice(new Notice("system", "VERBOSE: " + text));
 	}
     
-	public void addChat(final String name, final String text) {
+	public void addChat(final Chat chat) {
 		final Activity activity = (Activity) getContext();
 		activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				ChatBox.this.chatBoxItems.add(new ChatBoxChat(name, text));
+				ChatBox.this.chatBoxItems.add(chat);
 				((BaseAdapter) ChatBox.this.getAdapter()).notifyDataSetChanged();
 			}
 		});

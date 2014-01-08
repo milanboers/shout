@@ -7,6 +7,8 @@ import java.util.UUID;
 import android.util.Log;
 import nu.shout.shout.chat.ChatService;
 import nu.shout.shout.chat.ChatServiceListener;
+import nu.shout.shout.chat.items.Chat;
+import nu.shout.shout.chat.items.Notice;
 import nu.shout.shout.location.Building;
 
 public class NicknameRegistrar implements ChatServiceListener {
@@ -57,7 +59,7 @@ public class NicknameRegistrar implements ChatServiceListener {
 	}
 
 	@Override
-	public void onMessage(String nickname, String message) {
+	public void onMessage(Chat chat) {
 	}
 
 	@Override
@@ -99,17 +101,15 @@ public class NicknameRegistrar implements ChatServiceListener {
 	}
 
 	@Override
-	public void onNotice(String nickname, String notice) {
-		Log.v(TAG, "FROM: " + nickname);
-		Log.v(TAG, notice);
-		if(nickname.equals("NickServ"))
+	public void onNotice(Notice notice) {
+		if(notice.nickname.equals("NickServ"))
 		{
-			if(notice.contains("already registered")) {
+			if(notice.message.contains("already registered")) {
 				for(NicknameRegistrarListener l : this.listeners) {
 					l.onNicknameInUse();
 				}
-			} else if(notice.contains("registered and protected")) {
-			} else if(notice.contains("registered")) {
+			} else if(notice.message.contains("registered and protected")) {
+			} else if(notice.message.contains("registered")) {
 				for(NicknameRegistrarListener l : this.listeners) {
 					l.onNicknameRegistered(this.nickname, this.password);
 				}

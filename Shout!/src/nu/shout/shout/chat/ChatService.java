@@ -15,6 +15,8 @@ import org.pircbotx.hooks.events.NoticeEvent;
 
 import nu.shout.shout.Notifications;
 import nu.shout.shout.R;
+import nu.shout.shout.chat.items.Chat;
+import nu.shout.shout.chat.items.Notice;
 import nu.shout.shout.irc.IRCConnection;
 import nu.shout.shout.irc.IRCListener;
 import nu.shout.shout.irc.IRCListenerAdapter;
@@ -50,6 +52,9 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	// Min. distance between location updates (in meters)
 	private static final int DIST_BETWEEN_LOC = 1;
 	
+	// Counter of how many processes (i.e. connecting or disconnecting) are busy
+	private int busy = 0;
+	
 	private final IBinder binder = new LocalBinder();
 	
 	private IRCConnection irc;
@@ -60,6 +65,8 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	private ChatMentionNotifier mentionNoti;
 	
 	private Building currentBuilding;
+	
+	private List<Chat> memory = new ArrayList<Chat>();
 	
 	private List<ChatServiceListener> listeners = new ArrayList<ChatServiceListener>();
 	
@@ -100,6 +107,10 @@ public class ChatService extends Service implements IRCListener, LocationListene
         return noti;
 	}
 	
+	public List<Chat> getMemory() {
+		return this.memory;
+	}
+	
 	public void connect() {
 		this.connect(settings.getString("nickname", null));
 	}
@@ -109,6 +120,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 		
 		if(!this.irc.isConnected())
 		{
+			this.busy += 1;
 			new AsyncTask<Void, Void, Exception>() {
 				@Override
 				protected Exception doInBackground(Void... arg0) {
@@ -150,14 +162,23 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	
 	public void disconnect() {
 		if(this.irc.isConnected())
-		{	this.irc.disconnect();
+		{
+			this.busy += 1;
+			this.irc.disconnect();
 			for(ChatServiceListener l : this.listeners)
 				l.onStartDisconnecting();
 		}
 	}
 	
 	public void sendMessage(String message) {
+		Chat chat = new Chat(System.currentTimeMillis(), "me", message);
+		this.memory.add(chat);
 		this.irc.sendMessage(message);
+		
+		// Tell to the listeners that there is a new message
+		for(ChatServiceListener l : this.listeners) {
+			l.onMessage(chat);
+		}
 	}
 	
 	public void sendMessage(String target, String message) {
@@ -175,6 +196,10 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	
 	public boolean isConnected() {
 		return this.irc.isConnected();
+	}
+	
+	public boolean isBusy() {
+		return this.busy != 0;
 	}
 	
 	public Set<User> getUsers() {
@@ -208,17 +233,24 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	@Override
 	public void onMessage(MessageEvent<IRCConnection> event) {
 		Log.v(TAG, "Message from " + event.getUser().getNick() + " " + event.getMessage());
+		
+		Chat c = new Chat(event.getTimestamp(), event.getUser().getNick(), event.getMessage());
+		this.memory.add(c);
+		
+		// Mention notification
 		if(event.getMessage().contains(this.irc.getNick())) {
-			this.mentionNoti.notify(event.getUser().getNick(), event.getMessage());
+			this.mentionNoti.notify(c);
 		}
 		
 		for(ChatServiceListener l : this.listeners) {
-			l.onMessage(event.getUser().getNick(), event.getMessage());
+			l.onMessage(c);
 		}
 	}
 
 	@Override
 	public void onConnect(ConnectEvent<IRCConnection> event) {
+		this.busy -= 1;
+		
 		// Identify
 		if(this.settings.getString("password", null) != null)
 			this.irc.identify(this.settings.getString("password", null));
@@ -232,8 +264,11 @@ public class ChatService extends Service implements IRCListener, LocationListene
 
 	@Override
 	public void onDisconnect(DisconnectEvent<IRCConnection> event) {
-		startForeground(Notifications.CONNECTED.ordinal(), getNotification(getString(R.string.app_name) + " " + getString(R.string.noti_not_in_channel)));
+		this.busy -= 1;
+
 		this.currentBuilding = null;
+		
+		startForeground(Notifications.CONNECTED.ordinal(), getNotification(getString(R.string.app_name) + " " + getString(R.string.noti_not_in_channel)));
 		
 		for(ChatServiceListener l : this.listeners) {
 			l.onDisconnect();
@@ -314,8 +349,10 @@ public class ChatService extends Service implements IRCListener, LocationListene
 
 	@Override
 	public void onNotice(NoticeEvent<IRCConnection> event) {
+		Notice n = new Notice(event.getUser().getNick(), event.getNotice());
+		
 		for(ChatServiceListener l : this.listeners) {
-			l.onNotice(event.getUser().getNick(), event.getNotice());
+			l.onNotice(n);
 		}
 	}
 }

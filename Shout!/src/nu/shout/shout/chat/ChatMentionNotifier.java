@@ -1,6 +1,7 @@
 package nu.shout.shout.chat;
 
 import nu.shout.shout.R;
+import nu.shout.shout.chat.items.Chat;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -50,11 +51,11 @@ public class ChatMentionNotifier {
 		this.builder.setDefaults(defaults);
 	}
 	
-	public void notify(String name, String message) {
+	public void notify(Chat c) {
 		if(this.prefs.getBoolean("noti_mentioned", true)) {
 			this.applySettings();
-			this.builder.setContentTitle(name + " " + this.ctx.getString(R.string.noti_mentioned));
-			this.builder.setContentText(message);
+			this.builder.setContentTitle(c.nickname + " " + this.ctx.getString(R.string.noti_mentioned));
+			this.builder.setContentText(c.message);
 			Notification n = this.builder.getNotification();
 			this.nm.notify(this.id, n);
 		}

@@ -14,6 +14,8 @@ import com.actionbarsherlock.view.Window;
 import nu.shout.shout.R;
 import nu.shout.shout.chat.ChatService.LocalBinder;
 import nu.shout.shout.chat.box.ChatBox;
+import nu.shout.shout.chat.items.Chat;
+import nu.shout.shout.chat.items.Notice;
 import nu.shout.shout.location.Building;
 import nu.shout.shout.settings.SettingsActivity;
 import android.os.Bundle;
@@ -41,7 +43,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	private ChatService chatService;
 	private ServiceConnection chatServiceConnection;
 	
-	private boolean busy;
+	//private boolean busy;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,15 +90,23 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 			@Override
 			public void onServiceConnected(ComponentName name, IBinder service) {
 				Log.v(TAG, "Service connected");
+				// Bind service
 				ChatService.LocalBinder binder = (LocalBinder) service;
 				ChatActivity.this.chatService = binder.getService();
+				// Restore old chats
+				for(Chat chat : ChatActivity.this.chatService.getMemory()) {
+					ChatActivity.this.onMessage(chat);
+				}
 				// Add listener
 				ChatActivity.this.chatService.addListener(ChatActivity.this);
-				
+				// Connect if not connected
 				if(!ChatActivity.this.chatService.isConnected())
 					ChatActivity.this.chatService.connect();
+				// Update UI according to building it is currently in
 				if(ChatActivity.this.chatService.getCurrentBuilding() != null)
 					ChatActivity.this.onJoin(ChatActivity.this.chatService.getCurrentBuilding());
+				
+				supportInvalidateOptionsMenu();
 			}
 			
 			@Override
@@ -113,7 +123,6 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     private void send() {
 		this.chatService.sendMessage(this.chatLine.getText().toString());
 		
-	    this.chatBox.addChat(getString(R.string.chat_me), this.chatLine.getText().toString());
 		this.chatLine.setText("");
     }
     
@@ -123,7 +132,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     private void showUsers() {
     	// Null = not in channel
     	if(this.chatService.getCurrentBuilding() == null) {
-    		this.chatBox.addNotice(getString(R.string.error_notinchannel));
+    		this.chatBox.addNotice(new Notice(null, getString(R.string.error_notinchannel)));
     		return;
     	}
     	
@@ -150,7 +159,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
         getSupportMenuInflater().inflate(R.menu.activity_chat, menu);
         Log.v(TAG, "Creating options menu");
         
-        if(this.chatService.getCurrentBuilding() == null)
+        if(this.chatService != null && this.chatService.getCurrentBuilding() == null)
         {
         	MenuItem usersSelect = menu.findItem(R.id.menu_users);
         	usersSelect.setVisible(false);
@@ -159,12 +168,17 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
         MenuItem toggleConnect = menu.findItem(R.id.menu_connect_toggle);
         toggleConnect.setTitle(R.string.menu_connect);
         
-        if(this.busy) {
-        	toggleConnect.setTitle(R.string.menu_cancel);
-        } else if(this.chatService != null && this.chatService.isConnected()) {
-        	toggleConnect.setTitle(R.string.menu_disconnect);
-        } else {
-        	toggleConnect.setTitle(R.string.menu_connect);
+        if(this.chatService != null)
+        {
+        	setSupportProgressBarIndeterminateVisibility(this.chatService.isBusy());
+        	
+        	if(this.chatService.isBusy()) {
+        		toggleConnect.setVisible(false);
+        	} else if(this.chatService.isConnected()) {
+	        	toggleConnect.setTitle(R.string.menu_disconnect);
+	        } else {
+	        	toggleConnect.setTitle(R.string.menu_connect);
+	        }
         }
         return true;
     }
@@ -177,10 +191,11 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	    		startActivity(i);
 	    		return true;
     		case R.id.menu_connect_toggle:
-				if(this.chatService.isConnected())
-	    			this.chatService.disconnect();
-	    		else
-	    			this.chatService.connect();
+    			if(this.chatService != null)
+    				if(this.chatService.isConnected())
+    					this.chatService.disconnect();
+    				else
+    					this.chatService.connect();
 				return true;
     		case R.id.menu_users:
 				showUsers();
@@ -191,70 +206,65 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     }
     
 	@Override
-	public void onMessage(String nickname, String message) {
-		this.chatBox.addChat(nickname, message);
+	public void onMessage(Chat chat) {
+		this.chatBox.addChat(chat);
 	}
 	
 	@Override
 	public void onConnect() {
 		// Update UI
-		runOnUiThread(new Runnable() {
+		/*runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				ChatActivity.this.setBusy(false);
 			}
-		});
-		this.chatBox.addNotice(getString(R.string.notice_connected));
+		});*/
+		this.chatBox.addNotice(new Notice(null, getString(R.string.notice_connected)));
+		supportInvalidateOptionsMenu();
 	}
 
 	// IN THREAD
 	@Override
 	public void onDisconnect() {
 		// Update UI
-		runOnUiThread(new Runnable() {
+		/*runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				ChatActivity.this.setBusy(false);
 			}
-		});
-		this.chatBox.addNotice(getString(R.string.notice_disconnected));
-		supportInvalidateOptionsMenu();
-	}
-	
-	private void setBusy(boolean busy) {
-		setProgressBarIndeterminateVisibility(busy);
-		this.busy = busy;
+		});*/
+		this.chatBox.addNotice(new Notice(null, getString(R.string.notice_disconnected)));
 		supportInvalidateOptionsMenu();
 	}
 
 	@Override
 	public void onLeave() {
-		this.chatBox.addNotice(getString(R.string.error_nobuildings));
+		this.chatBox.addNotice(new Notice(null, getString(R.string.error_nobuildings)));
     	setTitle(R.string.title_activity_chat);
 	}
 
 	@Override
 	public void onJoin(Building building) {
 		setTitle(building.shortcut + " - " + building.name);
-		this.chatBox.addNotice(getString(R.string.notice_joined_channel) + " " + building.name);
+		this.chatBox.addNotice(new Notice(null, getString(R.string.notice_joined_channel) + " " + building.name));
 	}
 
 	
 	@Override
 	public void onError(String message) {
-		ChatActivity.this.chatBox.addNotice(message);
+		ChatActivity.this.chatBox.addNotice(new Notice(null, message));
 	}
 
 	@Override
 	public void onStartConnecting() {
-		this.chatBox.addNotice(getString(R.string.notice_connecting));
-    	this.setBusy(true);
+		this.chatBox.addNotice(new Notice(null, getString(R.string.notice_connecting)));
+		supportInvalidateOptionsMenu();
 	}
 
 	@Override
 	public void onStartDisconnecting() {
-		this.chatBox.addNotice(getString(R.string.notice_disconnecting));
-		this.setBusy(true);
+		this.chatBox.addNotice(new Notice(null, getString(R.string.notice_disconnecting)));
+		supportInvalidateOptionsMenu();
 	}
 
 	@Override
@@ -264,7 +274,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	}
 
 	@Override
-	public void onNotice(String nickname, String notice) {
+	public void onNotice(Notice notice) {
 		// TODO Auto-generated method stub
 		
 	}
