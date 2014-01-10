@@ -22,9 +22,8 @@ public class NicknameRegistrar implements ChatServiceListener {
 	
 	protected List<NicknameRegistrarListener> listeners = new ArrayList<NicknameRegistrarListener>();
 	
-	public NicknameRegistrar(ChatService chatService, String nickname) {
+	public NicknameRegistrar(ChatService chatService) {
 		this.chatService = chatService;
-		this.nickname = nickname;
 		// Add listener
 		this.chatService.addListener(this);
 	}
@@ -37,7 +36,8 @@ public class NicknameRegistrar implements ChatServiceListener {
 	 * Registers the current nickname to nickserv
 	 * @return
 	 */
-	public void registerNick() {
+	public void registerNick(String nickname) {
+		this.nickname = nickname;
 		this.chatService.connect(this.nickname);
 	}
 
@@ -73,20 +73,25 @@ public class NicknameRegistrar implements ChatServiceListener {
 	public void onDisconnect() {
 		Log.v(TAG, "Disconnected");
 		for(NicknameRegistrarListener l : this.listeners) {
-			l.onErrorUnknown();
+			l.onDisconnect();
 		}
 	}
 
 	@Override
 	public void onNotice(Notice notice) {
+		Log.v(TAG, notice.message);
 		if(notice.nickname.equals("NickServ"))
 		{
 			if(notice.message.contains("already registered")) {
+				Log.v(TAG, "Notice contains already registered");
+				// Failure
+				this.chatService.disconnect();
 				for(NicknameRegistrarListener l : this.listeners) {
 					l.onErrorNicknameInUse();
 				}
 			} else if(notice.message.contains("registered and protected")) {
 			} else if(notice.message.contains("registered")) {
+				// Success
 				for(NicknameRegistrarListener l : this.listeners) {
 					l.onNicknameRegistered(this.nickname, this.password);
 				}
@@ -96,6 +101,8 @@ public class NicknameRegistrar implements ChatServiceListener {
 
 	@Override
 	public void onErrorNicknameInUse() {
+		// Failure
+		this.chatService.disconnect();
 		for(NicknameRegistrarListener l : this.listeners) {
 			l.onErrorNicknameInUse();
 		}
@@ -103,6 +110,8 @@ public class NicknameRegistrar implements ChatServiceListener {
 
 	@Override
 	public void onErrorCouldNotConnect() {
+		// Failure
+		this.chatService.disconnect();
 		for(NicknameRegistrarListener l : this.listeners) {
 			l.onErrorCouldNotConnect();
 		}
@@ -110,6 +119,8 @@ public class NicknameRegistrar implements ChatServiceListener {
 
 	@Override
 	public void onErrorUnknown(Exception e) {
+		// Failure
+		this.chatService.disconnect();
 		for(NicknameRegistrarListener l : this.listeners) {
 			l.onErrorUnknown();
 		}

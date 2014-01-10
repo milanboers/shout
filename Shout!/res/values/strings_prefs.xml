@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="pref_acc_clear_title">Clear account settings</string>
+    <string name="pref_acc_clear_summary">Resets account settings in Shout! and clears your nickname</string>
+    
     <string name="pref_noti_connected_title">Connected notification</string>
     <string name="pref_noti_connected_summary">Show notification when connected to the server</string>
     

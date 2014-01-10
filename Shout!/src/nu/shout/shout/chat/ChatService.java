@@ -16,6 +16,7 @@ import org.pircbotx.hooks.events.NoticeEvent;
 import nu.shout.shout.Notifications;
 import nu.shout.shout.R;
 import nu.shout.shout.chat.items.Chat;
+import nu.shout.shout.chat.items.Notice;
 import nu.shout.shout.irc.IRCConnection;
 import nu.shout.shout.irc.IRCListener;
 import nu.shout.shout.irc.IRCListenerAdapter;
@@ -120,7 +121,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	public void connect(String nickname) {
 		this.irc.setName(nickname);
 		
-		if(!this.irc.isConnected())
+		if(!this.irc.isConnected() && !this.isBusy())
 		{
 			this.busy += 1;
 			new AsyncTask<Void, Void, Exception>() {
@@ -252,6 +253,13 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	}
 
 	@Override
+	public void onNotice(NoticeEvent<IRCConnection> event) {
+		for(ChatServiceListener l : this.listeners) {
+			l.onNotice(new Notice(event.getUser().getNick(), event.getMessage()));
+		}
+	}
+
+	@Override
 	public void onConnect(ConnectEvent<IRCConnection> event) {
 		this.busy -= 1;
 		
@@ -345,10 +353,5 @@ public class ChatService extends Service implements IRCListener, LocationListene
 
 	@Override
 	public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
-	}
-
-	@Override
-	public void onNotice(NoticeEvent<IRCConnection> event) {
-		// We don't do anything with notices here
 	}
 }

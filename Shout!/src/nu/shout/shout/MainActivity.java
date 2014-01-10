@@ -3,6 +3,7 @@ package nu.shout.shout;
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
 
 import nu.shout.shout.chat.ChatActivity;
 import nu.shout.shout.chat.ChatService;
@@ -27,26 +28,41 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 	private static final String TAG = "MainActivity";
 	
 	private EditText nicknameView;
+	private Button button;
 	
 	protected ChatService chatService;
 	private ServiceConnection chatServiceConnection;
+	
+	// Member variable because it must be references for the duration of this activity
+	private NicknameRegistrar nr;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		setContentView(R.layout.activity_main);
 		
 		this.nicknameView = (EditText) findViewById(R.id.main_nickname);
 		
-		Button b = (Button) findViewById(R.id.main_button_chat);
-		b.setOnClickListener(new View.OnClickListener() {
+		this.button = (Button) findViewById(R.id.main_button_chat);
+		this.button.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				MainActivity.this.nicknameView.setError(null);
+				MainActivity.this.button.setEnabled(false);
+				
 				String nickname = MainActivity.this.nicknameView.getText().toString();
 				
-				NicknameRegistrar nr = new NicknameRegistrar(MainActivity.this.chatService, nickname);
-				nr.addListener(MainActivity.this);
-				nr.registerNick();
+				// Only if service is already connected etc.
+				if(MainActivity.this.chatService != null) {
+					// Only create nr once, otherwise everything will happen twice
+					if(MainActivity.this.nr == null)
+						MainActivity.this.nr = new NicknameRegistrar(MainActivity.this.chatService);
+					MainActivity.this.nr.addListener(MainActivity.this);
+					MainActivity.this.nr.registerNick(nickname);
+					
+					setSupportProgressBarIndeterminateVisibility(true);
+				}
 			}
 		});
 		
@@ -124,17 +140,37 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 
 	@Override
 	public void onErrorNicknameInUse() {
-		this.nicknameView.setError(getString(R.string.error_nickname_in_use));
+		setError(getString(R.string.error_nickname_in_use));
 	}
 
 	@Override
 	public void onErrorCouldNotConnect() {
-		this.nicknameView.setError(getString(R.string.error_could_not_connect));
+		setError(getString(R.string.error_could_not_connect));
 	}
 
 	@Override
 	public void onErrorUnknown() {
-		this.nicknameView.setError(getString(R.string.error_unknown));
+		setError(getString(R.string.error_unknown));
+	}
+	
+	private void setError(final String error) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				MainActivity.this.nicknameView.setError(error);
+			}
+		});
+	}
+
+	@Override
+	public void onDisconnect() {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				MainActivity.this.button.setEnabled(true);
+				setSupportProgressBarIndeterminateVisibility(false);
+			}
+		});
 	}
 
 }
