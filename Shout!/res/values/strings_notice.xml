@@ -7,4 +7,5 @@
     <string name="notice_already_connected">You are already connected. Idiot.</string>
     <string name="notice_not_connected">You are not connected. Idiot.</string>
     <string name="notice_joined_channel">Joined channel</string>
+    <string name="notice_provider_disabled">Location provider is not enabled. Shout may not work correctly.</string>
 </resources>

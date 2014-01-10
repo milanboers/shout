@@ -23,8 +23,10 @@ public class IRCConnection extends PircBotX {
 		this.setAutoReconnect(true);
 	}
 	
-	public void sendMessage(String message) {
-		// TODO: wat als channel == null?
+	public void sendMessage(String message) throws NotInChannelException {
+		if(channelName == null) {
+			throw new NotInChannelException();
+		}
 		this.sendMessage(channelName, message);
 	}
 

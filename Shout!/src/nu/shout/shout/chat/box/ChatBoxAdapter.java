@@ -4,8 +4,9 @@ import java.util.List;
 
 import nu.shout.shout.R;
 import nu.shout.shout.chat.items.Chat;
+import nu.shout.shout.chat.items.Error;
 import nu.shout.shout.chat.items.Item;
-import nu.shout.shout.chat.items.Notice;
+import nu.shout.shout.chat.items.Report;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,17 +29,19 @@ public class ChatBoxAdapter extends BaseAdapter {
 		Item i = this.getItem(position);
 		if(i != null) {
 			if(i instanceof Chat) {
-				return getChatView((Chat) i);
-			} else if(i instanceof Notice) {
-				return getNoticeView((Notice) i);
+				return getChatView(convertView, (Chat) i);
+			} else if(i instanceof Report) {
+				return getReportView(convertView, (Report) i);
+			} else if(i instanceof Error) {
+				return getErrorView(convertView, (Error) i);
 			}
 		}
 		return convertView;
 	}
 	
-	public View getChatView(Chat i) {
+	public View getChatView(View v, Chat i) {
 		LayoutInflater vi = LayoutInflater.from(this.ctx);
-		View v = vi.inflate(R.layout.list_chat_chat, null);
+		v = vi.inflate(R.layout.list_chat_chat, null);
 		
 		TextView msg = (TextView) v.findViewById(R.id.list_chat_chat_message);
 		msg.setText("<" + i.nickname + "> " + i.message);
@@ -46,11 +49,21 @@ public class ChatBoxAdapter extends BaseAdapter {
 		return v;
 	}
 	
-	public View getNoticeView(Notice i) {
+	public View getReportView(View v, Report i) {
 		LayoutInflater vi = LayoutInflater.from(this.ctx);
-		View v = vi.inflate(R.layout.list_chat_notice, null);
+		v = vi.inflate(R.layout.list_chat_report, null);
 		
-		TextView msg = (TextView) v.findViewById(R.id.list_chat_notice_message);
+		TextView msg = (TextView) v.findViewById(R.id.list_chat_report_message);
+		msg.setText(i.message);
+		
+		return v;
+	}
+	
+	public View getErrorView(View v, Error i) {
+		LayoutInflater vi = LayoutInflater.from(this.ctx);
+		v = vi.inflate(R.layout.list_chat_error, null);
+		
+		TextView msg = (TextView) v.findViewById(R.id.list_chat_error_message);
 		msg.setText(i.message);
 		
 		return v;

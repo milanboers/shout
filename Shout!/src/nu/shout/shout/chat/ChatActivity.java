@@ -15,7 +15,10 @@ import nu.shout.shout.R;
 import nu.shout.shout.chat.ChatService.LocalBinder;
 import nu.shout.shout.chat.box.ChatBox;
 import nu.shout.shout.chat.items.Chat;
+import nu.shout.shout.chat.items.Error;
 import nu.shout.shout.chat.items.Notice;
+import nu.shout.shout.chat.items.Report;
+import nu.shout.shout.irc.NotInChannelException;
 import nu.shout.shout.location.Building;
 import nu.shout.shout.settings.SettingsActivity;
 import android.os.Bundle;
@@ -42,8 +45,6 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	
 	private ChatService chatService;
 	private ServiceConnection chatServiceConnection;
-	
-	//private boolean busy;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,9 +122,12 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
      * Sends the current line in the chatBox
      */
     private void send() {
-		this.chatService.sendMessage(this.chatLine.getText().toString());
-		
-		this.chatLine.setText("");
+		try {
+			this.chatService.sendMessage(this.chatLine.getText().toString());
+			this.chatLine.setText("");
+		} catch (NotInChannelException e) {
+			this.chatBox.addItem(new Error(getString(R.string.error_notinchannel)));
+		}
     }
     
     /**
@@ -132,7 +136,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     private void showUsers() {
     	// Null = not in channel
     	if(this.chatService.getCurrentBuilding() == null) {
-    		this.chatBox.addNotice(new Notice(null, getString(R.string.error_notinchannel)));
+    		this.chatBox.addItem(new Error(getString(R.string.error_notinchannel)));
     		return;
     	}
     	
@@ -207,75 +211,74 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     
 	@Override
 	public void onMessage(Chat chat) {
-		this.chatBox.addChat(chat);
+		this.chatBox.addItem(chat);
 	}
 	
 	@Override
 	public void onConnect() {
-		// Update UI
-		/*runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				ChatActivity.this.setBusy(false);
-			}
-		});*/
-		this.chatBox.addNotice(new Notice(null, getString(R.string.notice_connected)));
+		this.chatBox.addItem(new Report(getString(R.string.notice_connected)));
 		supportInvalidateOptionsMenu();
 	}
 
 	// IN THREAD
 	@Override
 	public void onDisconnect() {
-		// Update UI
-		/*runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				ChatActivity.this.setBusy(false);
-			}
-		});*/
-		this.chatBox.addNotice(new Notice(null, getString(R.string.notice_disconnected)));
+		this.chatBox.addItem(new Report(getString(R.string.notice_disconnected)));
 		supportInvalidateOptionsMenu();
 	}
 
 	@Override
 	public void onLeave() {
-		this.chatBox.addNotice(new Notice(null, getString(R.string.error_nobuildings)));
+		this.chatBox.addItem(new Error(getString(R.string.error_nobuildings)));
     	setTitle(R.string.title_activity_chat);
 	}
 
 	@Override
 	public void onJoin(Building building) {
 		setTitle(building.shortcut + " - " + building.name);
-		this.chatBox.addNotice(new Notice(null, getString(R.string.notice_joined_channel) + " " + building.name));
+		this.chatBox.addItem(new Report(getString(R.string.notice_joined_channel) + " " + building.name));
 	}
 
 	
 	@Override
-	public void onError(String message) {
-		ChatActivity.this.chatBox.addNotice(new Notice(null, message));
+	public void onErrorBuildingFetch() {
+		ChatActivity.this.chatBox.addItem(new Report(getString(R.string.error_buildingfetch)));
 	}
 
 	@Override
 	public void onStartConnecting() {
-		this.chatBox.addNotice(new Notice(null, getString(R.string.notice_connecting)));
+		this.chatBox.addItem(new Report(getString(R.string.notice_connecting)));
 		supportInvalidateOptionsMenu();
 	}
 
 	@Override
 	public void onStartDisconnecting() {
-		this.chatBox.addNotice(new Notice(null, getString(R.string.notice_disconnecting)));
+		this.chatBox.addItem(new Report(getString(R.string.notice_disconnecting)));
 		supportInvalidateOptionsMenu();
 	}
 
 	@Override
-	public void onNicknameInUse() {
-		// TODO Auto-generated method stub
-		
+	public void onErrorNicknameInUse() {
+		this.chatBox.addItem(new Error(getString(R.string.error_nickname_in_use)));
+	}
+
+	@Override
+	public void onErrorCouldNotConnect() {
+		this.chatBox.addItem(new Error(getString(R.string.error_could_not_connect)));
+	}
+
+	@Override
+	public void onErrorUnknown(Exception e) {
+		this.chatBox.addItem(new Error(getString(R.string.error_unknown)));
 	}
 
 	@Override
 	public void onNotice(Notice notice) {
-		// TODO Auto-generated method stub
-		
+		//
+	}
+
+	@Override
+	public void onIssueProviderDisabled() {
+		this.chatBox.addItem(new Report(getString(R.string.notice_provider_disabled)));
 	}
 }

@@ -16,10 +16,10 @@ import org.pircbotx.hooks.events.NoticeEvent;
 import nu.shout.shout.Notifications;
 import nu.shout.shout.R;
 import nu.shout.shout.chat.items.Chat;
-import nu.shout.shout.chat.items.Notice;
 import nu.shout.shout.irc.IRCConnection;
 import nu.shout.shout.irc.IRCListener;
 import nu.shout.shout.irc.IRCListenerAdapter;
+import nu.shout.shout.irc.NotInChannelException;
 import nu.shout.shout.location.Building;
 import nu.shout.shout.location.BuildingFetcher;
 import android.app.Notification;
@@ -47,30 +47,32 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	@SuppressWarnings("unused")
 	private static final String TAG = "ChatService";
 	
+	private static final String SERVER_ADDR = "server.shout.nu";
+	
 	// Min. time between location updates (in milliseconds)
 	private static final int TIME_BETWEEN_LOC = 5000;
 	// Min. distance between location updates (in meters)
 	private static final int DIST_BETWEEN_LOC = 1;
 	
 	// Counter of how many processes (i.e. connecting or disconnecting) are busy
-	private int busy = 0;
+	protected int busy = 0;
 	
-	private final IBinder binder = new LocalBinder();
+	protected final IBinder binder = new LocalBinder();
 	
-	private IRCConnection irc;
+	protected IRCConnection irc;
 	
-	private LocationManager lm;
-	private BuildingFetcher bf;
+	protected ChatMentionNotifier mentionNoti;
 	
-	private ChatMentionNotifier mentionNoti;
+	protected List<ChatServiceListener> listeners = new ArrayList<ChatServiceListener>();
+	
+	private SharedPreferences settings;
 	
 	private Building currentBuilding;
 	
 	private List<Chat> memory = new ArrayList<Chat>();
 	
-	private List<ChatServiceListener> listeners = new ArrayList<ChatServiceListener>();
-	
-	private SharedPreferences settings;
+	private LocationManager lm;
+	private BuildingFetcher bf;
 	
 	@Override
 	public void onCreate() {
@@ -126,32 +128,34 @@ public class ChatService extends Service implements IRCListener, LocationListene
 				protected Exception doInBackground(Void... arg0) {
 					try {
 						Log.v(TAG, "Connecting");
-						// TODO: ergens hardcoden
-						// TODO: geeft nullpointerexception als niet kan connecten
-						ChatService.this.irc.connect("server.shout.nu");
+						ChatService.this.irc.connect(SERVER_ADDR);
 						return null;
-					} catch (NickAlreadyInUseException e) {
-						for(ChatServiceListener l : ChatService.this.listeners)
-							l.onNicknameInUse();
-						return e;
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						return e;
-					} catch (IrcException e) {
-						// You have not registered
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						return e;
-					} catch (NullPointerException e) {
-						// TODO: kon niet connecten
+					} catch (Exception e) {
 						return e;
 					}
 				}
 				
 				@Override
 				protected void onPostExecute(Exception e) {
-					
+					if(e != null) {
+						for(ChatServiceListener l : ChatService.this.listeners) {
+							try {
+								throw e;
+							} catch (NickAlreadyInUseException e1) {
+								l.onErrorNicknameInUse();
+							} catch (IOException e1) {
+								l.onErrorCouldNotConnect();
+							} catch (IrcException e1) {
+								l.onErrorCouldNotConnect();
+							} catch (NullPointerException e1) {
+								l.onErrorCouldNotConnect();
+							} catch (Exception e1) {
+								// Unknown error
+								e1.printStackTrace();
+								l.onErrorUnknown(e1);
+							}
+						}
+					}
 				}
 			}.execute();
 			
@@ -170,7 +174,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 		}
 	}
 	
-	public void sendMessage(String message) {
+	public void sendMessage(String message) throws NotInChannelException {
 		Chat chat = new Chat(System.currentTimeMillis(), "me", message);
 		this.memory.add(chat);
 		this.irc.sendMessage(message);
@@ -302,8 +306,6 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	
 	@Override
 	public void onLocationChanged(final Location loc) {
-		//this.chatBox.addVerboseNotice("New location lat " + loc.getLatitude() + " lon " + loc.getLongitude());
-		
 		new AsyncTask<Void, Void, List<Building>>() {
 			@Override
 			protected List<Building> doInBackground(Void... arg0) {
@@ -318,7 +320,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 			protected void onPostExecute(List<Building> buildings) {
 				if(buildings == null) {
 					for(ChatServiceListener l : ChatService.this.listeners) {
-						l.onError(getString(R.string.error_ioexception));
+						l.onErrorBuildingFetch();
 					}
 				} else if(buildings.size() == 0) {
 					ChatService.this.leave();
@@ -331,28 +333,22 @@ public class ChatService extends Service implements IRCListener, LocationListene
 
 	@Override
 	public void onProviderDisabled(String arg0) {
-		// TODO Auto-generated method stub
-		
+		for(ChatServiceListener l : this.listeners) {
+			l.onIssueProviderDisabled();
+		}
 	}
 
 	@Override
 	public void onProviderEnabled(String arg0) {
-		// TODO Auto-generated method stub
-		
+		// An enabled provider is not really interesting.. Is it?
 	}
 
 	@Override
 	public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void onNotice(NoticeEvent<IRCConnection> event) {
-		Notice n = new Notice(event.getUser().getNick(), event.getNotice());
-		
-		for(ChatServiceListener l : this.listeners) {
-			l.onNotice(n);
-		}
+		// We don't do anything with notices here
 	}
 }

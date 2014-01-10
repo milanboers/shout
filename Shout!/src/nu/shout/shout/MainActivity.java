@@ -28,7 +28,7 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 	
 	private EditText nicknameView;
 	
-	private ChatService chatService;
+	protected ChatService chatService;
 	private ServiceConnection chatServiceConnection;
 
 	@Override
@@ -123,8 +123,18 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 	}
 
 	@Override
-	public void onNicknameInUse() {
-		Log.v(TAG, "Nickname in use");
+	public void onErrorNicknameInUse() {
+		this.nicknameView.setError(getString(R.string.error_nickname_in_use));
+	}
+
+	@Override
+	public void onErrorCouldNotConnect() {
+		this.nicknameView.setError(getString(R.string.error_could_not_connect));
+	}
+
+	@Override
+	public void onErrorUnknown() {
+		this.nicknameView.setError(getString(R.string.error_unknown));
 	}
 
 }

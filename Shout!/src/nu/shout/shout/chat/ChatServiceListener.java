@@ -9,10 +9,15 @@ public interface ChatServiceListener {
 	public void onJoin(Building building);
 	public void onMessage(Chat chat);
 	public void onNotice(Notice notice);
-	public void onError(String message);
 	public void onStartConnecting();
 	public void onStartDisconnecting();
 	public void onConnect();
 	public void onDisconnect();
-	public void onNicknameInUse();
+	// Location issues
+	public void onIssueProviderDisabled();
+	// Errors
+	public void onErrorBuildingFetch();
+	public void onErrorNicknameInUse();
+	public void onErrorCouldNotConnect();
+	public void onErrorUnknown(Exception e);
 }

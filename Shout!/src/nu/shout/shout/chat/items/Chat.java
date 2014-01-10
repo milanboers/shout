@@ -1,5 +1,6 @@
 package nu.shout.shout.chat.items;
 
+
 public class Chat extends Item {
 	public long timestamp;
 	public String nickname;
