@@ -84,7 +84,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     }
     
     private void setupService() {
-        Intent serviceIntent = new Intent(this, ChatService.class);
+    	Intent serviceIntent = new Intent(this, ChatService.class);
         startService(serviceIntent);
         
         this.chatServiceConnection = new ServiceConnection() {
@@ -196,10 +196,11 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	    		return true;
     		case R.id.menu_connect_toggle:
     			if(this.chatService != null)
-    				if(this.chatService.isConnected())
+    				if(this.chatService.isConnected()) {
     					this.chatService.disconnect();
-    				else
-    					this.chatService.connect();
+    				} else {
+    					this.setupService();
+    				}
 				return true;
     		case R.id.menu_users:
 				showUsers();
@@ -223,6 +224,9 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	// IN THREAD
 	@Override
 	public void onDisconnect() {
+		unbindService(this.chatServiceConnection);
+		setTitle(R.string.disconnected);
+		
 		this.chatBox.addItem(new Report(getString(R.string.notice_disconnected)));
 		supportInvalidateOptionsMenu();
 	}
@@ -242,7 +246,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	
 	@Override
 	public void onErrorBuildingFetch() {
-		ChatActivity.this.chatBox.addItem(new Report(getString(R.string.error_buildingfetch)));
+		this.chatBox.addItem(new Report(getString(R.string.error_buildingfetch)));
 	}
 
 	@Override

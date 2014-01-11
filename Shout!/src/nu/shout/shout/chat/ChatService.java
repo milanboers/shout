@@ -80,6 +80,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 		Log.v(TAG, "Creating ChatService");
         
         this.mentionNoti = new ChatMentionNotifier(this, Notifications.MENTIONED.ordinal());
+        this.listeners.add(this.mentionNoti);
         
 		startForeground(Notifications.CONNECTED.ordinal(), getNotification(getString(R.string.noti_not_in_channel)));
         
@@ -175,6 +176,10 @@ public class ChatService extends Service implements IRCListener, LocationListene
 		}
 	}
 	
+	public String getNick() {
+		return this.irc.getNick();
+	}
+	
 	public void sendMessage(String message) throws NotInChannelException {
 		Chat chat = new Chat(System.currentTimeMillis(), "me", message);
 		this.memory.add(chat);
@@ -242,11 +247,6 @@ public class ChatService extends Service implements IRCListener, LocationListene
 		Chat c = new Chat(event.getTimestamp(), event.getUser().getNick(), event.getMessage());
 		this.memory.add(c);
 		
-		// Mention notification
-		if(event.getMessage().contains(this.irc.getNick())) {
-			this.mentionNoti.notify(c);
-		}
-		
 		for(ChatServiceListener l : this.listeners) {
 			l.onMessage(c);
 		}
@@ -285,6 +285,8 @@ public class ChatService extends Service implements IRCListener, LocationListene
 		for(ChatServiceListener l : this.listeners) {
 			l.onDisconnect();
 		}
+		// Stop the service
+		this.stopSelf();
 	}
 	
 	/**

@@ -2,6 +2,7 @@
 <resources>
     <string name="pref_acc_clear_title">Clear account settings</string>
     <string name="pref_acc_clear_summary">Resets account settings in Shout! and clears your nickname</string>
+    <string name="pref_acc_clear_conf">Are you sure you want to clear your account settings? You will not be able to use your current nickname anymore!</string>
     
     <string name="pref_noti_connected_title">Connected notification</string>
     <string name="pref_noti_connected_summary">Show notification when connected to the server</string>

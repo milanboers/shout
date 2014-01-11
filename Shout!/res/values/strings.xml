@@ -12,5 +12,8 @@
     <string name="chat_me">me</string>
     <string name="users_in">Users in</string>
     <string name="ok">OK</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="disconnected">Disconnected</string>
 
 </resources>

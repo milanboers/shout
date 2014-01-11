@@ -1,7 +1,11 @@
 package nu.shout.shout.chat;
 
+import java.util.Locale;
+
 import nu.shout.shout.R;
 import nu.shout.shout.chat.items.Chat;
+import nu.shout.shout.chat.items.Notice;
+import nu.shout.shout.location.Building;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -11,29 +15,29 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 
-public class ChatMentionNotifier {
+public class ChatMentionNotifier implements ChatServiceListener {
 	private int id;
 	
-	private Context ctx;
+	private ChatService chatService;
 
 	private NotificationManager nm;
 	private SharedPreferences prefs;
 	
 	private NotificationCompat.Builder builder;
 	
-	public ChatMentionNotifier(Context ctx, int id) {
-		this.ctx = ctx;
+	public ChatMentionNotifier(ChatService chatService, int id) {
+		this.chatService = chatService;
 		this.id = id;
 		
-		this.nm = (NotificationManager) this.ctx.getSystemService(Context.NOTIFICATION_SERVICE);
-		this.prefs = PreferenceManager.getDefaultSharedPreferences(this.ctx);
+		this.nm = (NotificationManager) this.chatService.getSystemService(Context.NOTIFICATION_SERVICE);
+		this.prefs = PreferenceManager.getDefaultSharedPreferences(this.chatService);
 		
-		Intent notiIntent = new Intent(this.ctx, ChatActivity.class);
-        PendingIntent i = PendingIntent.getActivity(this.ctx, 0, notiIntent, 0);
+		Intent notiIntent = new Intent(this.chatService, ChatActivity.class);
+        PendingIntent i = PendingIntent.getActivity(this.chatService, 0, notiIntent, 0);
         
-		this.builder = new NotificationCompat.Builder(this.ctx)
+		this.builder = new NotificationCompat.Builder(this.chatService)
      		.setSmallIcon(android.R.drawable.ic_media_ff)
-     		.setContentText(this.ctx.getString(R.string.noti_not_in_channel))
+     		.setContentText(this.chatService.getString(R.string.noti_not_in_channel))
      		.setAutoCancel(true)
      		.setContentIntent(i);
 		
@@ -50,14 +54,67 @@ public class ChatMentionNotifier {
 			defaults |= Notification.DEFAULT_LIGHTS;
 		this.builder.setDefaults(defaults);
 	}
-	
-	public void notify(Chat c) {
-		if(this.prefs.getBoolean("noti_mentioned", true)) {
-			this.applySettings();
-			this.builder.setContentTitle(c.nickname + " " + this.ctx.getString(R.string.noti_mentioned));
-			this.builder.setContentText(c.message);
-			Notification n = this.builder.getNotification();
-			this.nm.notify(this.id, n);
+
+	@Override
+	public void onLeave() {
+	}
+
+	@Override
+	public void onJoin(Building building) {
+	}
+
+	@Override
+	public void onMessage(Chat c) {
+		// Mention notification
+		Locale locale = this.chatService.getResources().getConfiguration().locale;
+		if(c.message.toLowerCase(locale).contains(this.chatService.getNick().toLowerCase(locale))) {
+			if(this.prefs.getBoolean("noti_mentioned", true)) {
+				this.applySettings();
+				this.builder.setContentTitle(c.nickname + " " + this.chatService.getString(R.string.noti_mentioned));
+				this.builder.setContentText(c.message);
+				Notification n = this.builder.getNotification();
+				this.nm.notify(this.id, n);
+			}
 		}
+	}
+
+	@Override
+	public void onNotice(Notice notice) {
+	}
+
+	@Override
+	public void onStartConnecting() {
+	}
+
+	@Override
+	public void onStartDisconnecting() {
+	}
+
+	@Override
+	public void onConnect() {
+	}
+
+	@Override
+	public void onDisconnect() {
+	}
+
+	@Override
+	public void onIssueProviderDisabled() {
+	}
+
+	@Override
+	public void onErrorBuildingFetch() {
+	}
+
+	@Override
+	public void onErrorNicknameInUse() {
+	}
+
+	@Override
+	public void onErrorCouldNotConnect() {
+	}
+
+	@Override
+	public void onErrorUnknown(Exception e) {
 	}
 }
