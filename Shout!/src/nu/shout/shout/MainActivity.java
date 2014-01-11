@@ -1,5 +1,8 @@
 package nu.shout.shout;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -27,6 +30,8 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 	@SuppressWarnings("unused")
 	private static final String TAG = "MainActivity";
 	
+	private static final String VALID_NICKNAME = "^[A-Za-z][A-Za-z0-9-_]*$";
+	
 	private EditText nicknameView;
 	private Button button;
 	
@@ -52,16 +57,19 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 				MainActivity.this.button.setEnabled(false);
 				
 				String nickname = MainActivity.this.nicknameView.getText().toString();
-				
-				// Only if service is already connected etc.
-				if(MainActivity.this.chatService != null) {
-					// Only create nr once, otherwise everything will happen twice
-					if(MainActivity.this.nr == null)
-						MainActivity.this.nr = new NicknameRegistrar(MainActivity.this.chatService);
-					MainActivity.this.nr.addListener(MainActivity.this);
-					MainActivity.this.nr.registerNick(nickname);
-					
-					setSupportProgressBarIndeterminateVisibility(true);
+				if(checkName(nickname)) {
+					// Only if service is already connected etc.
+					if(MainActivity.this.chatService != null) {
+						// Only create nr once, otherwise everything will happen twice
+						if(MainActivity.this.nr == null)
+							MainActivity.this.nr = new NicknameRegistrar(MainActivity.this.chatService);
+						MainActivity.this.nr.addListener(MainActivity.this);
+						MainActivity.this.nr.registerNick(nickname);
+						
+						setSupportProgressBarIndeterminateVisibility(true);
+					}
+				} else {
+					MainActivity.this.button.setEnabled(true);
 				}
 			}
 		});
@@ -69,8 +77,22 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 		setupService();
 		
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-		if(settings.getString("nickname", null) != null && settings.getString("password", null) != null)
+		if((settings.getString("nickname", null) != null && settings.getString("password", null) != null) ||
+		   (this.chatService != null && this.chatService.isConnected()))
 			goToChat();
+	}
+	
+	/*
+	 * Checks if this is a valid nickname
+	 */
+	private boolean checkName(String nickname) {
+		Pattern pattern = Pattern.compile(VALID_NICKNAME);
+		Matcher matcher = pattern.matcher(nickname);
+		if(!matcher.matches()) {
+			this.nicknameView.setError(getString(R.string.error_invalid_nick));
+			return false;
+		}
+		return true;
 	}
 	
 	private void setupService() {

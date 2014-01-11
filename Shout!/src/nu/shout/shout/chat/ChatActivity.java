@@ -104,8 +104,9 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 				if(!ChatActivity.this.chatService.isConnected())
 					ChatActivity.this.chatService.connect();
 				// Update UI according to building it is currently in
-				if(ChatActivity.this.chatService.getCurrentBuilding() != null)
-					ChatActivity.this.onJoin(ChatActivity.this.chatService.getCurrentBuilding());
+				if(ChatActivity.this.chatService.getCurrentBuilding() != null) {
+					ChatActivity.this.setTitleToBuilding(ChatActivity.this.chatService.getCurrentBuilding());
+				}
 				
 				supportInvalidateOptionsMenu();
 			}
@@ -121,7 +122,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     /**
      * Sends the current line in the chatBox
      */
-    private void send() {
+    protected void send() {
 		try {
 			this.chatService.sendMessage(this.chatLine.getText().toString());
 			this.chatLine.setText("");
@@ -133,7 +134,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     /**
      * Get list of users in the channel
      */
-    private void showUsers() {
+    protected void showUsers() {
     	// Null = not in channel
     	if(this.chatService.getCurrentBuilding() == null) {
     		this.chatBox.addItem(new Error(getString(R.string.error_notinchannel)));
@@ -149,6 +150,10 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     	f.setUsernames(usernames.toArray(new String[usernames.size()]));
     	f.setChannelName(this.chatService.getCurrentBuilding().name);
     	f.show(getSupportFragmentManager(), "users");
+    }
+    
+    protected void setTitleToBuilding(Building building) {
+		setTitle(building.shortcut + " - " + building.name);
     }
     
     @Override
@@ -199,7 +204,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     				if(this.chatService.isConnected()) {
     					this.chatService.disconnect();
     				} else {
-    					this.setupService();
+    					this.chatService.connect();
     				}
 				return true;
     		case R.id.menu_users:
@@ -217,17 +222,14 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	
 	@Override
 	public void onConnect() {
-		this.chatBox.addItem(new Report(getString(R.string.notice_connected)));
+		this.chatBox.addItem(new Report(getString(R.string.report_connected)));
 		supportInvalidateOptionsMenu();
 	}
 
 	// IN THREAD
 	@Override
 	public void onDisconnect() {
-		unbindService(this.chatServiceConnection);
-		setTitle(R.string.disconnected);
-		
-		this.chatBox.addItem(new Report(getString(R.string.notice_disconnected)));
+		this.chatBox.addItem(new Report(getString(R.string.report_disconnected)));
 		supportInvalidateOptionsMenu();
 	}
 
@@ -238,8 +240,8 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	}
 
 	@Override
-	public void onJoin(Building building) {
-		setTitle(building.shortcut + " - " + building.name);
+	public void onJoining(Building building) {
+		setTitleToBuilding(building);
 	}
 
 	
@@ -250,13 +252,13 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 
 	@Override
 	public void onStartConnecting() {
-		this.chatBox.addItem(new Report(getString(R.string.notice_connecting)));
+		this.chatBox.addItem(new Report(getString(R.string.report_connecting)));
 		supportInvalidateOptionsMenu();
 	}
 
 	@Override
 	public void onStartDisconnecting() {
-		this.chatBox.addItem(new Report(getString(R.string.notice_disconnecting)));
+		this.chatBox.addItem(new Report(getString(R.string.report_disconnecting)));
 		supportInvalidateOptionsMenu();
 	}
 
@@ -282,20 +284,26 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 
 	@Override
 	public void onIssueProviderDisabled() {
-		this.chatBox.addItem(new Report(getString(R.string.notice_provider_disabled)));
+		this.chatBox.addItem(new Report(getString(R.string.report_provider_disabled)));
 	}
 
 	@Override
 	public void onUserJoined(String nickname) {
-		this.chatBox.addItem(
-				new Report(
-						String.format(getString(R.string.notice_user_joined), nickname, this.chatService.getCurrentBuilding().name)));
+		if(nickname.equals(this.chatService.getNick())) {
+			ChatActivity.this.chatBox.addItem(new Report(String.format(getString(R.string.report_you_joined), ChatActivity.this.chatService.getCurrentBuilding().name)));
+		} else {
+			this.chatBox.addItem(
+					new Report(
+							String.format(getString(R.string.report_user_joined), nickname, this.chatService.getCurrentBuilding().name)));
+		}
 	}
 
 	@Override
 	public void onUserParted(String nickname) {
-		this.chatBox.addItem(
+		if(!nickname.equals(this.chatService.getNick())) {
+			this.chatBox.addItem(
 				new Report(
-						String.format(getString(R.string.notice_user_parted), nickname, this.chatService.getCurrentBuilding().name)));
+					String.format(getString(R.string.report_user_parted), nickname, this.chatService.getCurrentBuilding().name)));
+		}
 	}
 }

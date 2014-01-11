@@ -6,7 +6,7 @@ import nu.shout.shout.location.Building;
 
 public interface ChatServiceListener {
 	public void onLeave();
-	public void onJoin(Building building);
+	public void onJoining(Building building);
 	public void onMessage(Chat chat);
 	public void onNotice(Notice notice);
 	public void onStartConnecting();

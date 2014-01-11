@@ -46,7 +46,7 @@ public class NicknameRegistrar implements ChatServiceListener {
 	}
 
 	@Override
-	public void onJoin(Building building) {
+	public void onJoining(Building building) {
 	}
 
 	@Override

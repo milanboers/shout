@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="report_connecting">Connecting…</string>
+    <string name="report_connected">Connected</string>
+    <string name="report_disconnecting">Disconnecting…</string>
+    <string name="report_disconnected">Disconnected</string>
+    <string name="report_already_connected">You are already connected. Idiot.</string>
+    <string name="report_not_connected">You are not connected. Idiot.</string>
+    <string name="report_provider_disabled">Location provider is not enabled. Shout may not work correctly.</string>
+    <string name="report_user_joined" formatted="false">%s has joined %s</string>
+    <string name="report_user_parted" formatted="false">%s has parted %s</string>
+    <string name="report_you_joined" formatted="false">You are now in %s</string>
+</resources>

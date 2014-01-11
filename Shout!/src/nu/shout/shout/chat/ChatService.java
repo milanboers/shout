@@ -282,13 +282,11 @@ public class ChatService extends Service implements IRCListener, LocationListene
 
 		this.currentBuilding = null;
 		
-		startForeground(Notifications.CONNECTED.ordinal(), getNotification(getString(R.string.app_name) + " " + getString(R.string.noti_not_in_channel)));
-		
 		for(ChatServiceListener l : this.listeners) {
 			l.onDisconnect();
 		}
-		// Stop the service
-		this.stopSelf();
+		
+		stopForeground(true);
 	}
 	
 	/**
@@ -312,7 +310,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
     	this.currentBuilding = building;
     	
     	for(ChatServiceListener l : this.listeners) {
-    		l.onJoin(building);
+    		l.onJoining(building);
     	}
     }
 	

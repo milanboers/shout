@@ -5,5 +5,6 @@
     <string name="error_notinchannel">You\'re not in any channel right now.</string>
     <string name="error_could_not_connect">Could not connect to the server. Please check your internet connection and try again later.</string>
     <string name="error_nickname_in_use">That nickname is already in use.</string>
+    <string name="error_invalid_nick">Invalid nickname. Please choose something else.</string>
     <string name="error_buildingfetch">There was an error when finding which building you are in. Please check your internet connection and try again later.</string>
 </resources>
