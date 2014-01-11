@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="noti_connected">is connected</string>
-    <string name="noti_in_channel">In channel</string>
+    <string name="noti_in_channel" formatted="false">In channel %s</string>
     <string name="noti_not_in_channel">Not in any channel</string>
     <string name="noti_mentioned">mentioned your name</string>
 </resources>

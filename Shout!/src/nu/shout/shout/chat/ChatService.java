@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.pircbotx.User;
 import org.pircbotx.exception.IrcException;
@@ -16,7 +17,6 @@ import org.pircbotx.hooks.events.NoticeEvent;
 import org.pircbotx.hooks.events.PartEvent;
 
 import nu.shout.shout.Notifications;
-import nu.shout.shout.R;
 import nu.shout.shout.chat.items.Chat;
 import nu.shout.shout.chat.items.Notice;
 import nu.shout.shout.irc.IRCConnection;
@@ -58,7 +58,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	private static final int DIST_BETWEEN_LOC = 1;
 	
 	// Counter of how many processes (i.e. connecting or disconnecting) are busy
-	protected int busy = 0;
+	protected AtomicInteger busy = new AtomicInteger();
 	
 	protected final IBinder binder = new LocalBinder();
 	
@@ -84,8 +84,6 @@ public class ChatService extends Service implements IRCListener, LocationListene
         this.mentionNoti = new ChatNotifier(this, Notifications.MENTIONED.ordinal());
         this.listeners.add(this.mentionNoti);
         
-		startForeground(Notifications.CONNECTED.ordinal(), getNotification(getString(R.string.noti_not_in_channel)));
-        
 		this.irc = new IRCConnection();
         IRCListenerAdapter adapter = new IRCListenerAdapter(this);
         this.irc.getListenerManager().addListener(adapter);
@@ -99,18 +97,24 @@ public class ChatService extends Service implements IRCListener, LocationListene
         this.onLocationChanged(this.lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
 	}
 	
-	private Notification getNotification(String text) {
+	private void invalidateForeground() {
 		Intent notiIntent = new Intent(this, ChatActivity.class);
         PendingIntent i = PendingIntent.getActivity(this, 0, notiIntent, 0);
         
-        Notification noti = new NotificationCompat.Builder(this)
+        Notification notification = new NotificationCompat.Builder(this)
 	     	.setSmallIcon(android.R.drawable.ic_media_ff)
-	     	.setContentText(text)
+	     	.setContentTitle(this.getCurrentBuilding().name)
+	     	.setContentTitle("Shout is running")
 	     	.setOngoing(true)
 	     	.setContentIntent(i)
 	     	.getNotification();
         
-        return noti;
+        Log.v(TAG, "connected? : " + this.isConnected());
+        if(this.isConnected()) {
+        	startForeground(Notifications.CONNECTED.ordinal(), notification);
+        } else {
+        	stopForeground(true);
+        }
 	}
 	
 	public List<Chat> getMemory() {
@@ -126,7 +130,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 		
 		if(!this.irc.isConnected() && !this.isBusy())
 		{
-			this.busy += 1;
+			this.busy.incrementAndGet();
 			new AsyncTask<Void, Void, Exception>() {
 				@Override
 				protected Exception doInBackground(Void... arg0) {
@@ -171,7 +175,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	public void disconnect() {
 		if(this.irc.isConnected())
 		{
-			this.busy += 1;
+			this.busy.incrementAndGet();
 			this.irc.disconnect();
 			for(ChatServiceListener l : this.listeners)
 				l.onStartDisconnecting();
@@ -211,7 +215,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	}
 	
 	public boolean isBusy() {
-		return this.busy != 0;
+		return this.busy.get() != 0;
 	}
 	
 	public Set<User> getUsers() {
@@ -263,13 +267,13 @@ public class ChatService extends Service implements IRCListener, LocationListene
 
 	@Override
 	public void onConnect(ConnectEvent<IRCConnection> event) {
-		this.busy -= 1;
+		this.busy.decrementAndGet();
 		
 		// Identify
 		if(this.settings.getString("password", null) != null)
 			this.irc.identify(this.settings.getString("password", null));
 		
-		startForeground(Notifications.CONNECTED.ordinal(), getNotification(getString(R.string.app_name) + " " + getString(R.string.noti_connected)));
+		invalidateForeground();
 		
 		for(ChatServiceListener l : this.listeners) {
 			l.onConnect();
@@ -278,23 +282,22 @@ public class ChatService extends Service implements IRCListener, LocationListene
 
 	@Override
 	public void onDisconnect(DisconnectEvent<IRCConnection> event) {
-		this.busy -= 1;
-
+		this.busy.decrementAndGet();
 		this.currentBuilding = null;
 		
 		for(ChatServiceListener l : this.listeners) {
 			l.onDisconnect();
 		}
 		
-		stopForeground(true);
+		invalidateForeground();
 	}
 	
 	/**
      * Leave all channels
      */
-    private void leave() {
-    	this.currentBuilding = null;
+    protected void leave() {
     	this.irc.partAllChannels();
+    	this.currentBuilding = null;
     	
     	for(ChatServiceListener l : this.listeners) {
     		l.onLeave();
@@ -305,9 +308,11 @@ public class ChatService extends Service implements IRCListener, LocationListene
      * Join a channel (and leave all others)
      * @param building building to join
      */
-    private void join(Building building) {
-    	this.irc.joinChannel(building.ircroom);
+    protected void join(Building building) {
     	this.currentBuilding = building;
+    	this.irc.joinChannel(building.ircroom);
+    	
+    	invalidateForeground();
     	
     	for(ChatServiceListener l : this.listeners) {
     		l.onJoining(building);
