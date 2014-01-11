@@ -240,7 +240,6 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	@Override
 	public void onJoin(Building building) {
 		setTitle(building.shortcut + " - " + building.name);
-		this.chatBox.addItem(new Report(getString(R.string.notice_joined_channel) + " " + building.name));
 	}
 
 	
@@ -284,5 +283,19 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	@Override
 	public void onIssueProviderDisabled() {
 		this.chatBox.addItem(new Report(getString(R.string.notice_provider_disabled)));
+	}
+
+	@Override
+	public void onUserJoined(String nickname) {
+		this.chatBox.addItem(
+				new Report(
+						String.format(getString(R.string.notice_user_joined), nickname, this.chatService.getCurrentBuilding().name)));
+	}
+
+	@Override
+	public void onUserParted(String nickname) {
+		this.chatBox.addItem(
+				new Report(
+						String.format(getString(R.string.notice_user_parted), nickname, this.chatService.getCurrentBuilding().name)));
 	}
 }

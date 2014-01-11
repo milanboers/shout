@@ -133,5 +133,13 @@ public class NicknameRegistrar implements ChatServiceListener {
 	@Override
 	public void onIssueProviderDisabled() {
 	}
+
+	@Override
+	public void onUserJoined(String nickname) {
+	}
+
+	@Override
+	public void onUserParted(String nickname) {
+	}
 	
 }

@@ -15,7 +15,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 
-public class ChatMentionNotifier implements ChatServiceListener {
+public class ChatNotifier implements ChatServiceListener {
 	private int id;
 	
 	private ChatService chatService;
@@ -25,7 +25,7 @@ public class ChatMentionNotifier implements ChatServiceListener {
 	
 	private NotificationCompat.Builder builder;
 	
-	public ChatMentionNotifier(ChatService chatService, int id) {
+	public ChatNotifier(ChatService chatService, int id) {
 		this.chatService = chatService;
 		this.id = id;
 		
@@ -116,5 +116,13 @@ public class ChatMentionNotifier implements ChatServiceListener {
 
 	@Override
 	public void onErrorUnknown(Exception e) {
+	}
+
+	@Override
+	public void onUserJoined(String nickname) {
+	}
+
+	@Override
+	public void onUserParted(String nickname) {
 	}
 }

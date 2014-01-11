@@ -13,6 +13,8 @@ public interface ChatServiceListener {
 	public void onStartDisconnecting();
 	public void onConnect();
 	public void onDisconnect();
+	public void onUserJoined(String nickname);
+	public void onUserParted(String nickname);
 	// Location issues
 	public void onIssueProviderDisabled();
 	// Errors

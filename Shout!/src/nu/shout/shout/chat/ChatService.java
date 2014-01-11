@@ -10,8 +10,10 @@ import org.pircbotx.exception.IrcException;
 import org.pircbotx.exception.NickAlreadyInUseException;
 import org.pircbotx.hooks.events.ConnectEvent;
 import org.pircbotx.hooks.events.DisconnectEvent;
+import org.pircbotx.hooks.events.JoinEvent;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.NoticeEvent;
+import org.pircbotx.hooks.events.PartEvent;
 
 import nu.shout.shout.Notifications;
 import nu.shout.shout.R;
@@ -62,7 +64,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	
 	protected IRCConnection irc;
 	
-	protected ChatMentionNotifier mentionNoti;
+	protected ChatNotifier mentionNoti;
 	
 	protected List<ChatServiceListener> listeners = new ArrayList<ChatServiceListener>();
 	
@@ -79,7 +81,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	public void onCreate() {
 		Log.v(TAG, "Creating ChatService");
         
-        this.mentionNoti = new ChatMentionNotifier(this, Notifications.MENTIONED.ordinal());
+        this.mentionNoti = new ChatNotifier(this, Notifications.MENTIONED.ordinal());
         this.listeners.add(this.mentionNoti);
         
 		startForeground(Notifications.CONNECTED.ordinal(), getNotification(getString(R.string.noti_not_in_channel)));
@@ -355,5 +357,19 @@ public class ChatService extends Service implements IRCListener, LocationListene
 
 	@Override
 	public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
+	}
+
+	@Override
+	public void onJoin(JoinEvent<IRCConnection> event) {
+		for(ChatServiceListener l : this.listeners) {
+			l.onUserJoined(event.getUser().getNick());
+		}
+	}
+
+	@Override
+	public void onPart(PartEvent<IRCConnection> event) {
+		for(ChatServiceListener l : this.listeners) {
+			l.onUserParted(event.getUser().getNick());
+		}
 	}
 }
