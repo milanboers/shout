@@ -21,4 +21,7 @@
     
     <string name="pref_dev_verbose_title">Verbose mode</string>
     <string name="pref_dev_verbose_summary">Shows extra information</string>
+    
+    <string name="pref_credits_title">Version 0.9</string>
+    <string name="pref_credits_summary">Timothy de Vries, Milan Boers</string>
 </resources>

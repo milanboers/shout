@@ -44,5 +44,11 @@
                 android:summary="@string/pref_dev_verbose_summary" />
 
     </PreferenceCategory>
+    
+    <PreferenceCategory android:title="Version information">
+        <Preference
+            android:title="@string/pref_credits_title"
+            android:summary="@string/pref_credits_summary" />
+    </PreferenceCategory>
 
 </PreferenceScreen>
