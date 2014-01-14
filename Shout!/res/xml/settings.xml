@@ -14,11 +14,13 @@
             android:defaultValue="true"
             android:title="@string/pref_noti_connected_title"
             android:summary="@string/pref_noti_connected_summary" />
-        <SwitchPreference
+        <ListPreference
             android:key="noti_mentioned"
-            android:defaultValue="true"
             android:title="@string/pref_noti_mentioned_title"
-            android:summary="@string/pref_noti_mentioned_summary" />
+            android:summary="@string/pref_noti_mentioned_summary"
+            android:entries="@array/pref_noti_mentioned_entries"
+            android:entryValues="@array/pref_noti_mentioned_values"
+            android:defaultValue="mentioned" />
         <SwitchPreference
             android:key="noti_sound"
             android:defaultValue="true"

@@ -3,5 +3,6 @@
     <string name="noti_connected">is connected</string>
     <string name="noti_in_channel" formatted="false">In channel %s</string>
     <string name="noti_not_in_channel">Not in any channel</string>
-    <string name="noti_mentioned">mentioned your name</string>
+    <string name="noti_mentioned" formatted="false">%s mentioned your name</string>
+    <string name="noti_message" formatted="false">%s shouted something</string>
 </resources>

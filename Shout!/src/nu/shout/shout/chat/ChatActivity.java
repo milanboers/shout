@@ -39,6 +39,8 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	@SuppressWarnings("unused")
 	private static final String TAG = "ChatActivity";
 	
+	public static boolean running = false;
+	
 	private EditText chatLine;
 	private Button sendButton;
 	private ChatBox chatBox;
@@ -60,6 +62,18 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
         setupUI();
         
         setupService();
+    }
+    
+    @Override
+    protected void onResume() {
+    	running = true;
+    	super.onResume();
+    }
+    
+    @Override
+    protected void onPause() {
+    	running = false;
+    	super.onPause();
     }
     
     private void setupUI() {

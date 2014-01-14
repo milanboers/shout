@@ -1,0 +1,12 @@
+<resources>
+	<string-array name="pref_noti_mentioned_entries">
+	    <item>For all messages</item>
+	    <item>When name mentioned</item>
+	    <item>Never</item>
+	</string-array>
+	<string-array name="pref_noti_mentioned_values">
+	    <item>all</item>
+	    <item>mentioned</item>
+	    <item>never</item>
+	</string-array>
+</resources>

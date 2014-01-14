@@ -65,17 +65,27 @@ public class ChatNotifier implements ChatServiceListener {
 
 	@Override
 	public void onMessage(Chat c) {
-		// Mention notification
-		Locale locale = this.chatService.getResources().getConfiguration().locale;
-		if(c.message.toLowerCase(locale).contains(this.chatService.getNick().toLowerCase(locale))) {
-			if(this.prefs.getBoolean("noti_mentioned", true)) {
-				this.applySettings();
-				this.builder.setContentTitle(c.nickname + " " + this.chatService.getString(R.string.noti_mentioned));
-				this.builder.setContentText(c.message);
-				Notification n = this.builder.getNotification();
-				this.nm.notify(this.id, n);
+		// No notifications if ChatActivity is running
+		if(ChatActivity.running)
+			return;
+		
+		// All notifications
+		if(this.prefs.getString("noti_mentioned", "mentioned").equals("all")) {
+			notification(String.format(this.chatService.getString(R.string.noti_mentioned), c.nickname), c.message);
+		} else if(this.prefs.getString("noti_mentioned", "mentioned").equals("mentioned")) {
+			Locale locale = this.chatService.getResources().getConfiguration().locale;
+			if(c.message.toLowerCase(locale).contains(this.chatService.getNick().toLowerCase(locale))) {
+				notification(String.format(this.chatService.getString(R.string.noti_message), c.nickname), c.message);
 			}
 		}
+	}
+	
+	private void notification(String title, String message) {
+		this.applySettings();
+		this.builder.setContentTitle(title);
+		this.builder.setContentText(message);
+		Notification n = this.builder.getNotification();
+		this.nm.notify(this.id, n);
 	}
 
 	@Override
