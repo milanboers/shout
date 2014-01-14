@@ -179,6 +179,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
         
         if(this.chatService != null)
         {
+        	Log.v(TAG, "isbusy: " + this.chatService.isBusy());
         	setSupportProgressBarIndeterminateVisibility(this.chatService.isBusy());
         	
         	if(this.chatService.isBusy()) {
@@ -229,6 +230,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 	// IN THREAD
 	@Override
 	public void onDisconnect() {
+		Log.v(TAG, "3");
 		this.chatBox.addItem(new Report(getString(R.string.report_disconnected)));
 		supportInvalidateOptionsMenu();
 	}

@@ -98,21 +98,25 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	}
 	
 	private void invalidateForeground() {
-		Intent notiIntent = new Intent(this, ChatActivity.class);
-        PendingIntent i = PendingIntent.getActivity(this, 0, notiIntent, 0);
-        
-        Notification notification = new NotificationCompat.Builder(this)
-	     	.setSmallIcon(android.R.drawable.ic_media_ff)
-	     	.setContentTitle(this.getCurrentBuilding().name)
-	     	.setContentTitle("Shout is running")
-	     	.setOngoing(true)
-	     	.setContentIntent(i)
-	     	.getNotification();
-        
-        Log.v(TAG, "connected? : " + this.isConnected());
         if(this.isConnected()) {
+        	Intent notiIntent = new Intent(this, ChatActivity.class);
+            PendingIntent i = PendingIntent.getActivity(this, 0, notiIntent, 0);
+            
+            String title = "Not in any channel";
+            if(this.getCurrentBuilding() != null)
+            	title = this.getCurrentBuilding().name;
+            
+            Notification notification = new NotificationCompat.Builder(this)
+    	     	.setSmallIcon(android.R.drawable.ic_media_ff)
+    	     	.setContentTitle(title)
+    	     	.setContentTitle("Shout is running")
+    	     	.setOngoing(true)
+    	     	.setContentIntent(i)
+    	     	.getNotification();
+        	Log.v(TAG, "starting foreground");
         	startForeground(Notifications.CONNECTED.ordinal(), notification);
         } else {
+        	Log.v(TAG, "stopping foreground");
         	stopForeground(true);
         }
 	}
@@ -267,14 +271,12 @@ public class ChatService extends Service implements IRCListener, LocationListene
 
 	@Override
 	public void onConnect(ConnectEvent<IRCConnection> event) {
-		this.busy.decrementAndGet();
-		
 		// Identify
 		if(this.settings.getString("password", null) != null)
 			this.irc.identify(this.settings.getString("password", null));
-		
 		invalidateForeground();
 		
+		this.busy.decrementAndGet();
 		for(ChatServiceListener l : this.listeners) {
 			l.onConnect();
 		}
@@ -282,14 +284,14 @@ public class ChatService extends Service implements IRCListener, LocationListene
 
 	@Override
 	public void onDisconnect(DisconnectEvent<IRCConnection> event) {
-		this.busy.decrementAndGet();
+		invalidateForeground();
+		
 		this.currentBuilding = null;
 		
+		this.busy.decrementAndGet();
 		for(ChatServiceListener l : this.listeners) {
 			l.onDisconnect();
 		}
-		
-		invalidateForeground();
 	}
 	
 	/**
