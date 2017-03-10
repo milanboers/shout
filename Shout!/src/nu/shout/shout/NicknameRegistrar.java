@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ *  * License, v. 2.0. If a copy of the MPL was not distributed with this
+ *   * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package nu.shout.shout;
 
 import java.util.ArrayList;
@@ -14,24 +18,24 @@ import nu.shout.shout.location.Building;
 public class NicknameRegistrar implements ChatServiceListener {
 	@SuppressWarnings("unused")
 	private static final String TAG = "NicknameRegistrar";
-	
+
 	private String password = "p" + UUID.randomUUID().toString().replaceAll("\\-", "").substring(0, 25);
 	private String nickname;
-	
+
 	protected ChatService chatService;
-	
+
 	protected List<NicknameRegistrarListener> listeners = new ArrayList<NicknameRegistrarListener>();
-	
+
 	public NicknameRegistrar(ChatService chatService) {
 		this.chatService = chatService;
 		// Add listener
 		this.chatService.addListener(this);
 	}
-	
+
 	public void addListener(NicknameRegistrarListener listener) {
 		this.listeners.add(listener);
 	}
-	
+
 	/**
 	 * Registers the current nickname to nickserv
 	 * @return
@@ -141,5 +145,5 @@ public class NicknameRegistrar implements ChatServiceListener {
 	@Override
 	public void onUserParted(String nickname) {
 	}
-	
+
 }

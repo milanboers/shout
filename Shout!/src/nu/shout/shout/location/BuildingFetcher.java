@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ *  * License, v. 2.0. If a copy of the MPL was not distributed with this
+ *   * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package nu.shout.shout.location;
 
 import java.io.IOException;
@@ -14,17 +18,17 @@ import android.location.Location;
 
 public class BuildingFetcher {
 	private Gson gson;
-	
+
 	public BuildingFetcher() {
 		this.gson = new Gson();
 	}
-	
+
 	private Reader get(Location loc) throws IOException {
 		InputStream input = new URL("http://shout.nu/location.php?lat=" + loc.getLatitude() + "&lon=" + loc.getLongitude()).openStream();
 		Reader r = new InputStreamReader(input, "UTF-8");
 		return r;
 	}
-	
+
 	public List<Building> getBuildings(Location loc) throws IOException {
 		Reader r = get(loc);
 		List<Building> buildingList = this.gson.fromJson(r, new TypeToken<List<Building>>(){}.getType());

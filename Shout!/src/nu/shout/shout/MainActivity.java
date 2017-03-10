@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ *  * License, v. 2.0. If a copy of the MPL was not distributed with this
+ *   * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package nu.shout.shout;
 
 import java.util.regex.Matcher;
@@ -29,15 +33,15 @@ import android.widget.EditText;
 public class MainActivity extends SherlockActivity implements NicknameRegistrarListener {
 	@SuppressWarnings("unused")
 	private static final String TAG = "MainActivity";
-	
+
 	private static final String VALID_NICKNAME = "^[A-Za-z][A-Za-z0-9-_]*$";
-	
+
 	private EditText nicknameView;
 	private Button button;
-	
+
 	protected ChatService chatService;
 	private ServiceConnection chatServiceConnection;
-	
+
 	// Member variable because it must be references for the duration of this activity
 	private NicknameRegistrar nr;
 
@@ -46,16 +50,16 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 		super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		setContentView(R.layout.activity_main);
-		
+
 		this.nicknameView = (EditText) findViewById(R.id.main_nickname);
-		
+
 		this.button = (Button) findViewById(R.id.main_button_chat);
 		this.button.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				MainActivity.this.nicknameView.setError(null);
 				MainActivity.this.button.setEnabled(false);
-				
+
 				String nickname = MainActivity.this.nicknameView.getText().toString();
 				if(checkName(nickname)) {
 					// Only if service is already connected etc.
@@ -65,7 +69,7 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 							MainActivity.this.nr = new NicknameRegistrar(MainActivity.this.chatService);
 						MainActivity.this.nr.addListener(MainActivity.this);
 						MainActivity.this.nr.registerNick(nickname);
-						
+
 						setSupportProgressBarIndeterminateVisibility(true);
 					}
 				} else {
@@ -73,15 +77,15 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 				}
 			}
 		});
-		
+
 		setupService();
-		
+
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		if((settings.getString("nickname", null) != null && settings.getString("password", null) != null) ||
 		   (this.chatService != null && this.chatService.isConnected()))
 			goToChat();
 	}
-	
+
 	/*
 	 * Checks if this is a valid nickname
 	 */
@@ -94,11 +98,11 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 		}
 		return true;
 	}
-	
+
 	private void setupService() {
         Intent serviceIntent = new Intent(this, ChatService.class);
         startService(serviceIntent);
-        
+
         this.chatServiceConnection = new ServiceConnection() {
 			@Override
 			public void onServiceConnected(ComponentName name, IBinder service) {
@@ -106,7 +110,7 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 				ChatService.LocalBinder binder = (LocalBinder) service;
 				MainActivity.this.chatService = binder.getService();
 			}
-			
+
 			@Override
 			public void onServiceDisconnected(ComponentName name) {
 				Log.v(TAG, "Service disconnected");
@@ -114,14 +118,14 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
         };
         bindService(serviceIntent, this.chatServiceConnection, BIND_AUTO_CREATE);
     }
-	
+
 	private void goToChat() {
 		Intent intent = new Intent(MainActivity.this, ChatActivity.class);
 		startActivity(intent);
 		// Stop the activity so people can't go back
 		MainActivity.this.finish();
 	}
-	
+
 	@Override
 	public void onDestroy() {
 		Log.v(TAG, "Unbinding connection");
@@ -135,7 +139,7 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 		getSupportMenuInflater().inflate(R.menu.activity_main, menu);
 		return true;
 	}
-	
+
 	@Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
@@ -150,13 +154,13 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 	@Override
 	public void onNicknameRegistered(String nickname, String password) {
 		Log.v(TAG, "Nickname registered " + password);
-		
+
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		Editor ed = settings.edit();
 		ed.putString("nickname", nickname);
 		ed.putString("password", password);
 		ed.commit();
-		
+
 		goToChat();
 	}
 
@@ -174,7 +178,7 @@ public class MainActivity extends SherlockActivity implements NicknameRegistrarL
 	public void onErrorUnknown() {
 		setError(getString(R.string.error_unknown));
 	}
-	
+
 	private void setError(final String error) {
 		runOnUiThread(new Runnable() {
 			@Override

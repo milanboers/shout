@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ *  * License, v. 2.0. If a copy of the MPL was not distributed with this
+ *   * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package nu.shout.shout.chat;
 
 import java.io.IOException;
@@ -49,63 +53,63 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	}
 	@SuppressWarnings("unused")
 	private static final String TAG = "ChatService";
-	
+
 	private static final String SERVER_ADDR = "server.shout.nu";
-	
+
 	// Min. time between location updates (in milliseconds)
 	private static final int TIME_BETWEEN_LOC = 5000;
 	// Min. distance between location updates (in meters)
 	private static final int DIST_BETWEEN_LOC = 1;
-	
+
 	// Counter of how many processes (i.e. connecting or disconnecting) are busy
 	protected AtomicInteger busy = new AtomicInteger();
-	
+
 	protected final IBinder binder = new LocalBinder();
-	
+
 	protected IRCConnection irc;
-	
+
 	protected ChatNotifier mentionNoti;
-	
+
 	protected List<ChatServiceListener> listeners = new ArrayList<ChatServiceListener>();
-	
+
 	private SharedPreferences settings;
-	
+
 	private Building currentBuilding;
-	
+
 	private List<Chat> memory = new ArrayList<Chat>();
-	
+
 	private LocationManager lm;
 	private BuildingFetcher bf;
-	
+
 	@Override
 	public void onCreate() {
 		Log.v(TAG, "Creating ChatService");
-        
+
         this.mentionNoti = new ChatNotifier(this, Notifications.MENTIONED.ordinal());
         this.listeners.add(this.mentionNoti);
-        
+
 		this.irc = new IRCConnection();
         IRCListenerAdapter adapter = new IRCListenerAdapter(this);
         this.irc.getListenerManager().addListener(adapter);
-        
+
         this.bf = new BuildingFetcher();
         this.settings = PreferenceManager.getDefaultSharedPreferences(this);
-        
+
         this.lm = (LocationManager) getSystemService(LOCATION_SERVICE);
         this.lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, TIME_BETWEEN_LOC, DIST_BETWEEN_LOC, this);
         // Pick last known location
         this.onLocationChanged(this.lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
 	}
-	
+
 	private void invalidateForeground() {
         if(this.isConnected()) {
         	Intent notiIntent = new Intent(this, ChatActivity.class);
             PendingIntent i = PendingIntent.getActivity(this, 0, notiIntent, 0);
-            
+
             String title = "Not in any channel";
             if(this.getCurrentBuilding() != null)
             	title = this.getCurrentBuilding().name;
-            
+
             Notification notification = new NotificationCompat.Builder(this)
     	     	.setSmallIcon(android.R.drawable.ic_media_ff)
     	     	.setContentTitle(title)
@@ -120,18 +124,18 @@ public class ChatService extends Service implements IRCListener, LocationListene
         	stopForeground(true);
         }
 	}
-	
+
 	public List<Chat> getMemory() {
 		return this.memory;
 	}
-	
+
 	public void connect() {
 		this.connect(settings.getString("nickname", null));
 	}
-	
+
 	public void connect(String nickname) {
 		this.irc.setName(nickname);
-		
+
 		if(!this.irc.isConnected() && !this.isBusy())
 		{
 			this.busy.incrementAndGet();
@@ -146,7 +150,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 						return e;
 					}
 				}
-				
+
 				@Override
 				protected void onPostExecute(Exception e) {
 					if(e != null) {
@@ -170,12 +174,12 @@ public class ChatService extends Service implements IRCListener, LocationListene
 					}
 				}
 			}.execute();
-			
+
 			for(ChatServiceListener l : this.listeners)
 				l.onStartConnecting();
 		}
 	}
-	
+
 	public void disconnect() {
 		if(this.irc.isConnected())
 		{
@@ -185,26 +189,26 @@ public class ChatService extends Service implements IRCListener, LocationListene
 				l.onStartDisconnecting();
 		}
 	}
-	
+
 	public String getNick() {
 		return this.irc.getNick();
 	}
-	
+
 	public void sendMessage(String message) throws NotInChannelException {
 		Chat chat = new Chat(System.currentTimeMillis(), "me", message);
 		this.memory.add(chat);
 		this.irc.sendMessage(message);
-		
+
 		// Tell to the listeners that there is a new message
 		for(ChatServiceListener l : this.listeners) {
 			l.onMessage(chat);
 		}
 	}
-	
+
 	public void sendMessage(String target, String message) {
 		this.irc.sendMessage(target, message);
 	}
-	
+
 	public boolean changeNick(String nickname) {
 		this.irc.changeNick(nickname);
 		Log.v(TAG, "nickname now " + this.irc.getNick());
@@ -213,32 +217,32 @@ public class ChatService extends Service implements IRCListener, LocationListene
 			return true;
 		return false;
 	}
-	
+
 	public boolean isConnected() {
 		return this.irc.isConnected();
 	}
-	
+
 	public boolean isBusy() {
 		return this.busy.get() != 0;
 	}
-	
+
 	public Set<User> getUsers() {
 		return this.irc.getChannel().getUsers();
 	}
-	
+
 	public void addListener(ChatServiceListener l) {
 		this.listeners.add(l);
 	}
-	
+
 	public Building getCurrentBuilding() {
 		return currentBuilding;
 	}
-	
+
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		return START_STICKY;
 	}
-	
+
 	@Override
 	public void onDestroy() {
 		Log.v(TAG, "ChatService destroyed");
@@ -253,10 +257,10 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	@Override
 	public void onMessage(MessageEvent<IRCConnection> event) {
 		Log.v(TAG, "Message from " + event.getUser().getNick() + " " + event.getMessage());
-		
+
 		Chat c = new Chat(event.getTimestamp(), event.getUser().getNick(), event.getMessage());
 		this.memory.add(c);
-		
+
 		for(ChatServiceListener l : this.listeners) {
 			l.onMessage(c);
 		}
@@ -275,7 +279,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 		if(this.settings.getString("password", null) != null)
 			this.irc.identify(this.settings.getString("password", null));
 		invalidateForeground();
-		
+
 		this.busy.decrementAndGet();
 		for(ChatServiceListener l : this.listeners) {
 			l.onConnect();
@@ -285,27 +289,27 @@ public class ChatService extends Service implements IRCListener, LocationListene
 	@Override
 	public void onDisconnect(DisconnectEvent<IRCConnection> event) {
 		invalidateForeground();
-		
+
 		this.currentBuilding = null;
-		
+
 		this.busy.decrementAndGet();
 		for(ChatServiceListener l : this.listeners) {
 			l.onDisconnect();
 		}
 	}
-	
+
 	/**
      * Leave all channels
      */
     protected void leave() {
     	this.irc.partAllChannels();
     	this.currentBuilding = null;
-    	
+
     	for(ChatServiceListener l : this.listeners) {
     		l.onLeave();
     	}
     }
-    
+
     /**
      * Join a channel (and leave all others)
      * @param building building to join
@@ -313,14 +317,14 @@ public class ChatService extends Service implements IRCListener, LocationListene
     protected void join(Building building) {
     	this.currentBuilding = building;
     	this.irc.joinChannel(building.ircroom);
-    	
+
     	invalidateForeground();
-    	
+
     	for(ChatServiceListener l : this.listeners) {
     		l.onJoining(building);
     	}
     }
-	
+
 	@Override
 	public void onLocationChanged(final Location loc) {
 		new AsyncTask<Void, Void, List<Building>>() {
@@ -332,7 +336,7 @@ public class ChatService extends Service implements IRCListener, LocationListene
 					return null;
 				}
 			}
-			
+
 			@Override
 			protected void onPostExecute(List<Building> buildings) {
 				if(buildings == null) {

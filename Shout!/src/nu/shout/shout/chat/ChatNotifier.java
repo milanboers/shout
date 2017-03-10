@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ *  * License, v. 2.0. If a copy of the MPL was not distributed with this
+ *   * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package nu.shout.shout.chat;
 
 import java.util.Locale;
@@ -17,33 +21,33 @@ import android.support.v4.app.NotificationCompat;
 
 public class ChatNotifier implements ChatServiceListener {
 	private int id;
-	
+
 	private ChatService chatService;
 
 	private NotificationManager nm;
 	private SharedPreferences prefs;
-	
+
 	private NotificationCompat.Builder builder;
-	
+
 	public ChatNotifier(ChatService chatService, int id) {
 		this.chatService = chatService;
 		this.id = id;
-		
+
 		this.nm = (NotificationManager) this.chatService.getSystemService(Context.NOTIFICATION_SERVICE);
 		this.prefs = PreferenceManager.getDefaultSharedPreferences(this.chatService);
-		
+
 		Intent notiIntent = new Intent(this.chatService, ChatActivity.class);
         PendingIntent i = PendingIntent.getActivity(this.chatService, 0, notiIntent, 0);
-        
+
 		this.builder = new NotificationCompat.Builder(this.chatService)
      		.setSmallIcon(android.R.drawable.ic_media_ff)
      		.setContentText(this.chatService.getString(R.string.noti_not_in_channel))
      		.setAutoCancel(true)
      		.setContentIntent(i);
-		
+
 		this.applySettings();
 	}
-	
+
 	private void applySettings() {
 		int defaults = 0;
 		if(this.prefs.getBoolean("noti_sound", true))
@@ -68,7 +72,7 @@ public class ChatNotifier implements ChatServiceListener {
 		// No notifications if ChatActivity is running
 		if(ChatActivity.running)
 			return;
-		
+
 		// All notifications
 		if(this.prefs.getString("noti_mentioned", "mentioned").equals("all")) {
 			notification(String.format(this.chatService.getString(R.string.noti_mentioned), c.nickname), c.message);
@@ -79,7 +83,7 @@ public class ChatNotifier implements ChatServiceListener {
 			}
 		}
 	}
-	
+
 	private void notification(String title, String message) {
 		this.applySettings();
 		this.builder.setContentTitle(title);

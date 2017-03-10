@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ *  * License, v. 2.0. If a copy of the MPL was not distributed with this
+ *   * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package nu.shout.shout.chat;
 
 import java.util.ArrayList;
@@ -38,44 +42,44 @@ import android.widget.TextView.OnEditorActionListener;
 public class ChatActivity extends SherlockFragmentActivity implements ChatServiceListener {
 	@SuppressWarnings("unused")
 	private static final String TAG = "ChatActivity";
-	
+
 	public static boolean running = false;
-	
+
 	private EditText chatLine;
 	private Button sendButton;
 	private ChatBox chatBox;
-	
+
 	private ChatService chatService;
 	private ServiceConnection chatServiceConnection;
-	
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.activity_chat);
-        
+
         this.chatLine = (EditText) findViewById(R.id.chatLine);
         this.sendButton = (Button) findViewById(R.id.sendButton);
-        
+
         this.chatBox = (ChatBox) findViewById(R.id.chatBox);
-        
+
         setupUI();
-        
+
         setupService();
     }
-    
+
     @Override
     protected void onResume() {
     	running = true;
     	super.onResume();
     }
-    
+
     @Override
     protected void onPause() {
     	running = false;
     	super.onPause();
     }
-    
+
     private void setupUI() {
         this.sendButton.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -83,7 +87,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 				send();
 			}
 		});
-        
+
         this.chatLine.setOnEditorActionListener(new OnEditorActionListener() {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -96,11 +100,11 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 			}
         });
     }
-    
+
     private void setupService() {
     	Intent serviceIntent = new Intent(this, ChatService.class);
         startService(serviceIntent);
-        
+
         this.chatServiceConnection = new ServiceConnection() {
 			@Override
 			public void onServiceConnected(ComponentName name, IBinder service) {
@@ -121,10 +125,10 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 				if(ChatActivity.this.chatService.getCurrentBuilding() != null) {
 					ChatActivity.this.setTitleToBuilding(ChatActivity.this.chatService.getCurrentBuilding());
 				}
-				
+
 				supportInvalidateOptionsMenu();
 			}
-			
+
 			@Override
 			public void onServiceDisconnected(ComponentName name) {
 				Log.v(TAG, "Service disconnected");
@@ -132,7 +136,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
         };
         bindService(serviceIntent, this.chatServiceConnection, BIND_AUTO_CREATE);
     }
-    
+
     /**
      * Sends the current line in the chatBox
      */
@@ -144,7 +148,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 			this.chatBox.addItem(new Error(getString(R.string.error_notinchannel)));
 		}
     }
-    
+
     /**
      * Get list of users in the channel
      */
@@ -154,48 +158,48 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     		this.chatBox.addItem(new Error(getString(R.string.error_notinchannel)));
     		return;
     	}
-    	
+
     	Set<User> users = this.chatService.getUsers();
     	List<String> usernames = new ArrayList<String>(users.size());
     	for(User user : users)
     		usernames.add(user.getNick());
-    	
+
     	ChatUsersDialog f = new ChatUsersDialog();
     	f.setUsernames(usernames.toArray(new String[usernames.size()]));
     	f.setChannelName(this.chatService.getCurrentBuilding().name);
     	f.show(getSupportFragmentManager(), "users");
     }
-    
+
     protected void setTitleToBuilding(Building building) {
 		setTitle(building.shortcut + " - " + building.name);
     }
-    
+
     @Override
     protected void onDestroy() {
     	unbindService(this.chatServiceConnection);
 		super.onDestroy();
     }
-    
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getSupportMenuInflater().inflate(R.menu.activity_chat, menu);
         Log.v(TAG, "Creating options menu");
-        
+
         if(this.chatService != null && this.chatService.getCurrentBuilding() == null)
         {
         	MenuItem usersSelect = menu.findItem(R.id.menu_users);
         	usersSelect.setVisible(false);
         }
-        
+
         MenuItem toggleConnect = menu.findItem(R.id.menu_connect_toggle);
         toggleConnect.setTitle(R.string.menu_connect);
-        
+
         if(this.chatService != null)
         {
         	Log.v(TAG, "isbusy: " + this.chatService.isBusy());
         	setSupportProgressBarIndeterminateVisibility(this.chatService.isBusy());
-        	
+
         	if(this.chatService.isBusy()) {
         		toggleConnect.setVisible(false);
         	} else if(this.chatService.isConnected()) {
@@ -206,7 +210,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
         }
         return true;
     }
-    
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
@@ -229,12 +233,12 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
     			return super.onOptionsItemSelected(item);
     	}
     }
-    
+
 	@Override
 	public void onMessage(Chat chat) {
 		this.chatBox.addItem(chat);
 	}
-	
+
 	@Override
 	public void onConnect() {
 		this.chatBox.addItem(new Report(getString(R.string.report_connected)));
@@ -260,7 +264,7 @@ public class ChatActivity extends SherlockFragmentActivity implements ChatServic
 		setTitleToBuilding(building);
 	}
 
-	
+
 	@Override
 	public void onErrorBuildingFetch() {
 		this.chatBox.addItem(new Report(getString(R.string.error_buildingfetch)));

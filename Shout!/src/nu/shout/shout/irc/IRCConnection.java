@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ *  * License, v. 2.0. If a copy of the MPL was not distributed with this
+ *   * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package nu.shout.shout.irc;
 
 import java.io.IOException;
@@ -13,16 +17,16 @@ import android.util.Log;
 public class IRCConnection extends PircBotX {
 	@SuppressWarnings("unused")
 	private static final String TAG = "IRCConnection";
-	
+
 	// The current channel (Shout will only connect to one channel)
 	private String channelName;
 
 	public IRCConnection() {
 		super();
-		
+
 		this.setAutoReconnect(true);
 	}
-	
+
 	public void sendMessage(String message) throws NotInChannelException {
 		if(channelName == null) {
 			throw new NotInChannelException();
@@ -38,7 +42,7 @@ public class IRCConnection extends PircBotX {
 			this.partChannel(c);
 		this.channelName = null;
 	}
-	
+
 	@Override
 	public void connect(String hostname) throws NickAlreadyInUseException, IOException, IrcException {
 		super.connect(hostname);
@@ -54,7 +58,7 @@ public class IRCConnection extends PircBotX {
 		super.joinChannel(channelName);
 		this.channelName = channelName;
 	}
-	
+
 	public Channel getChannel() {
 		Log.v(TAG, "channelName " + this.channelName);
 		for(Channel c : this.getChannels())

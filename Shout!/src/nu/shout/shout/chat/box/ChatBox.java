@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ *  * License, v. 2.0. If a copy of the MPL was not distributed with this
+ *   * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package nu.shout.shout.chat.box;
 
 import java.util.ArrayList;
@@ -15,12 +19,12 @@ public class ChatBox extends ListView {
 
 	public ChatBox(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		
+
 		this.setAdapter(new ChatBoxAdapter(context, this.chatBoxItems));
 		this.setStackFromBottom(true);
 		this.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
 	}
-	
+
 	public void addItem(final Item item) {
 		final Activity activity = (Activity) getContext();
 		activity.runOnUiThread(new Runnable() {

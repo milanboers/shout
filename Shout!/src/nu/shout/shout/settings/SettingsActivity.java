@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ *  * License, v. 2.0. If a copy of the MPL was not distributed with this
+ *   * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package nu.shout.shout.settings;
 
 import nu.shout.shout.R;
@@ -14,18 +18,18 @@ import com.actionbarsherlock.app.SherlockPreferenceActivity;
 public class SettingsActivity extends SherlockPreferenceActivity {
 	/**
 	 * Uses deprecated methods because this is the only way in ActionBarSherlock. Should be replaced with Fragments when switching to API 11.
-	 * 
+	 *
 	 */
 	@SuppressWarnings("deprecation")
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		addPreferencesFromResource(R.xml.settings);
-		
+
 		Preference clearAccount = (Preference) findPreference("acc_clear");
 		clearAccount.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-			
+
 			@Override
 			public boolean onPreferenceClick(Preference preference) {
 				SettingsActivity.this.clearAccount();
@@ -33,16 +37,16 @@ public class SettingsActivity extends SherlockPreferenceActivity {
 			}
 		});
 	}
-	
+
 	private void clearAccount() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder = builder.setMessage(R.string.pref_acc_clear_conf);
 		builder = builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-			
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(SettingsActivity.this);
-				
+
 				Editor ed = settings.edit();
 				ed.putString("nickname", null);
 				ed.putString("password", null);
@@ -50,7 +54,7 @@ public class SettingsActivity extends SherlockPreferenceActivity {
 			}
 		});
 		builder = builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-			
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				// Ignore if no was clicked

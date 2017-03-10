@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ *  * License, v. 2.0. If a copy of the MPL was not distributed with this
+ *   * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package nu.shout.shout.chat.box;
 
 import java.util.HashMap;
@@ -23,18 +27,18 @@ import android.widget.TextView;
 
 public class ChatBoxAdapter extends BaseAdapter {
 	private Context ctx;
-	
+
 	private List<Item> items;
-	
+
 	protected Map<String, Integer> smiley_map = new HashMap<String, Integer>();
-	
+
 	public ChatBoxAdapter(Context context, List<Item> items) {
 		this.ctx = context;
 		this.items = items;
-		
+
 		this.smiley_map.put(":-?\\)", R.drawable.smiley);
 	}
-	
+
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		Item i = this.getItem(position);
@@ -49,24 +53,24 @@ public class ChatBoxAdapter extends BaseAdapter {
 		}
 		return convertView;
 	}
-	
+
 	public View getChatView(View v, Chat i) {
 		LayoutInflater vi = LayoutInflater.from(this.ctx);
 		v = vi.inflate(R.layout.list_chat_chat, null);
-		
+
 		TextView nick = (TextView) v.findViewById(R.id.list_chat_chat_nickname);
 		// TODO: in layout scheiden
 		nick.setText(i.nickname + ":" + " ");
-		
+
 		TextView msg = (TextView) v.findViewById(R.id.list_chat_chat_message);
 		msg = setChatToTextView(msg, i.message);
-		
+
 		return v;
 	}
-	
+
 	private TextView setChatToTextView(TextView v, String chatText) {
 		SpannableString text = new SpannableString(chatText);
-		
+
 		for(Entry<String, Integer> kvp : this.smiley_map.entrySet()) {
 			Pattern pattern = Pattern.compile(kvp.getKey());
 			Matcher matcher = pattern.matcher(chatText);
@@ -77,24 +81,24 @@ public class ChatBoxAdapter extends BaseAdapter {
 		v.setText(text);
 		return v;
 	}
-	
+
 	public View getReportView(View v, Report i) {
 		LayoutInflater vi = LayoutInflater.from(this.ctx);
 		v = vi.inflate(R.layout.list_chat_report, null);
-		
+
 		TextView msg = (TextView) v.findViewById(R.id.list_chat_report_message);
 		msg.setText(i.message);
-		
+
 		return v;
 	}
-	
+
 	public View getErrorView(View v, Error i) {
 		LayoutInflater vi = LayoutInflater.from(this.ctx);
 		v = vi.inflate(R.layout.list_chat_error, null);
-		
+
 		TextView msg = (TextView) v.findViewById(R.id.list_chat_error_message);
 		msg.setText(i.message);
-		
+
 		return v;
 	}
 

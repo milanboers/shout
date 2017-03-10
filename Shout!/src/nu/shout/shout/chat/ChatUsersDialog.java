@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ *  * License, v. 2.0. If a copy of the MPL was not distributed with this
+ *   * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package nu.shout.shout.chat;
 
 import nu.shout.shout.R;
@@ -11,15 +15,15 @@ import com.actionbarsherlock.app.SherlockDialogFragment;
 public class ChatUsersDialog extends SherlockDialogFragment {
 	private String[] usernames;
 	private String channelName;
-	
+
 	public void setChannelName(String channelName) {
 		this.channelName = channelName;
 	}
-	
+
 	public void setUsernames(String[] usernames) {
 		this.usernames = usernames;
 	}
-	
+
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
     	AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
